@@ -1,0 +1,14 @@
+{
+  "name": "name-that-song",
+  "version": "0.0.1",
+  "description": "A game that generates a 200 song playlist based on a randomly selected user's input of an artist.  10 songs are randomly selected from the playlist.  A 30 second clip of each song is played.  All users may input a guess for the song name and artist of the song being played to get points.  Correct guesses are awarded 1 point, incorrect guesses cost the player one point.  The first player to 5 points ( must win by two points ) is declared the winner.  If there is no winner at the end of the first user's playlist, another user is picked to choose an artist.  The process continues until a user has won.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "eric121492@gmail.com",
+  "license": "MIT",
+  "dependencies": {
+    "restify": "^4.0.3"
+  }
+}
