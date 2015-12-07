@@ -20,4 +20,4 @@ node_modules
 *.iws
 
 ## private properties(api keys, etc)
-config/privateProperties
+config/privateProperties.js
