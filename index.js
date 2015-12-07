@@ -1,10 +1,7 @@
 'use strict';
 
 var restify = require('restify');
-var http = require('http');
-var request = require('request');
-var randomPlaylist = require('./utils/randomPlaylist');
-var privateProperties = require('./config/privateProperties');
+var playlist = require('./utils/playlist');
 var appProperties = require('./config/appProperties');
 
 var server = restify.createServer({
@@ -17,27 +14,14 @@ server.use(restify.queryParser());
 server.use(restify.bodyParser());
 
 server.get('/name-that-song/playlist/:artist', function (req, res, next) {
-    let artist = req.params['artist'];
-
-    let playlistProperties = {
-        api_key: privateProperties.echonestApiKey,
-        artist: artist,
-        format: appProperties.echonestFormat,
-        results: appProperties.echonestResults,
-        type: appProperties.echonestType
-    };
-
-    request({url:'http://developer.echonest.com/api/v4/playlist/basic', qs:playlistProperties}, function(err, response, body) {
-        if(err) {
-            res.send(err);
-            return next();
+    playlist.retrievePlaylistForArtist(req.params['artist'], function(playlist, err){
+        if(err){
+            res.send(500, err);
         } else {
-            let allTracks = JSON.parse(body);
-            let playlist = randomPlaylist.generate(allTracks, appProperties.playlistLength);
-
-            res.send(playlist);
-            return next();
+            res.send(200, playlist);
         }
+
+        return next();
     });
 });
 
