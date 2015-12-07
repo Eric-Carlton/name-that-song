@@ -41,6 +41,6 @@ server.get('/name-that-song/playlist/:artist', function (req, res, next) {
     });
 });
 
-server.listen(4701, function () {
+server.listen(appProperties.port, function () {
     console.log('%s listening at %s', server.name, server.url);
 });

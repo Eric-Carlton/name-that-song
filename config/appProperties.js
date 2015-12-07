@@ -5,5 +5,6 @@ module.exports = {
     playlistLength: 10,
     echonestFormat: 'json',
     echonestResults: 200,
-    echonestType: 'artist-radio'
+    echonestType: 'artist-radio',
+    port: 8008
 };
