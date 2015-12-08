@@ -59,9 +59,7 @@ server.get('/name-that-song/song/random', function (req, res, next) {
                 res.send(200, {url: previewUrl});
             }
         });
-
     }
-
     return next();
 });
 
