@@ -10,5 +10,8 @@
   "license": "MIT",
   "dependencies": {
     "restify": "^4.0.3"
+  },
+  "devDependencies": {
+    "jshint": "^2.8.0"
   }
 }
