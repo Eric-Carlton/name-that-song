@@ -26,7 +26,7 @@ server.get('/name-that-song/playlist/generate/:artist', function (req, res, next
             allSongs = playlist.response.songs;
             res.send(200);
         } else {
-            res.send(400, {error: 'No songs retrieved, please pick a different artist'});
+            res.send(404, {error: 'No songs retrieved, please pick a different artist'});
         }
         return next();
     });
@@ -42,9 +42,9 @@ server.get('/name-that-song/playlist/reset', function (req, res, next) {
 
 server.get('/name-that-song/song/random', function (req, res, next) {
     if (allSongs.length <= 0) {
-        res.send(400, {error: 'Playlist Empty. First generate a playlist from the /playlist/:artist route'});
+        res.send(404, {error: 'Playlist Empty. First generate a playlist from the /playlist/:artist route'});
     } else if (pickedSongs.length >= appProperties.playlistLength) {
-        res.send(400, {
+        res.send(403, {
             error: appProperties.playlistLength + ' songs already chosen from this playlist. Please ' +
             'generate a new playlist from the /playlist/:artist route'
         });
