@@ -28,7 +28,6 @@ server.get('/name-that-song/playlist/generate/:artist', function (req, res, next
         } else {
             res.send(400, {error: 'No songs retrieved, please pick a different artist'});
         }
-
         return next();
     });
 });
