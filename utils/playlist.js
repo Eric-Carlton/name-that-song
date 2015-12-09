@@ -12,9 +12,8 @@ module.exports = {
     /**
      * Gets a playlist from echonest for the artist given
      * @param artist - name of artist to generate playlist from
-     * @param callback - function to send results to
      */
-    retrievePlaylistForArtist: function (artist, callback) {
+    retrievePlaylistForArtist: function (artist) {
         let playlistProperties = {
             api_key: privateProperties.echonestApiKey,
             artist: artist,
@@ -23,15 +22,17 @@ module.exports = {
             type: appProperties.echonestType
         };
 
-        request({
-            url: 'http://developer.echonest.com/api/v4/playlist/basic',
-            qs: playlistProperties
-        }, function (err, response, body) {
-            if (err) {
-                callback(null, err);
-            } else {
-                callback(JSON.parse(body), null);
-            }
+        return new Promise(function(resolve, reject){
+            request({
+                url: 'http://developer.echonest.com/api/v4/playlist/basic',
+                qs: playlistProperties
+            }, function (err, response, body) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(JSON.parse(body));
+                }
+            });
         });
     },
 
@@ -61,26 +62,28 @@ module.exports = {
      * @param title - title of song to retrieve preview url fo
      * @param callback - function to send results to ( previewUrl, err )
      */
-    getPreviewUrlForSong: function (artist, title, callback) {
+    getPreviewUrlForSong: function (artist, title) {
         let spotifyProperties = {
             type: 'track',
             q: title + ' artist:' + artist
         };
 
-        request({url: 'https://api.spotify.com/v1/search', qs: spotifyProperties}, function (err, response, body) {
-            if (err) {
-                callback(null, err);
-            } else {
-                var song = JSON.parse(body);
-                if (song.hasOwnProperty('tracks') &&
-                    song.tracks.hasOwnProperty('items') &&
-                    song.tracks.items.length > 0 &&
-                    song.tracks.items[0].hasOwnProperty('preview_url')) {
-                    callback(song.tracks.items[0].preview_url);
+        return new Promise(function(resolve, reject){
+            request({url: 'https://api.spotify.com/v1/search', qs: spotifyProperties}, function (err, response, body) {
+                if (err) {
+                    reject(err);
                 } else {
-                    callback(null, 'no tracks retrieved');
+                    var song = JSON.parse(body);
+                    if (song.hasOwnProperty('tracks') &&
+                        song.tracks.hasOwnProperty('items') &&
+                        song.tracks.items.length > 0 &&
+                        song.tracks.items[0].hasOwnProperty('preview_url')) {
+                        resolve(song.tracks.items[0].preview_url);
+                    } else {
+                        reject({err: 'no songs received'});
+                    }
                 }
-            }
+            });
         });
     }
 };
