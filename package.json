@@ -8,6 +8,7 @@
   },
   "author": "eric121492@gmail.com",
   "license": "MIT",
+  "repository": "https://github.com/Eric-Carlton/name-that-song",
   "dependencies": {
     "angular": "^1.4.8",
     "angular-route": "^1.4.8",

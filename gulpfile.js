@@ -14,8 +14,7 @@ const paths = {
     allJs: 'webapp/app/components/**/*.js',
     jquery: './node_modules/jquery/dist/jquery.js',
     bootstrap: './node_modules/bootstrap/dist/js/bootstrap.js',
-    bootstrapLess: './node_modules/bootstrap/less/bootstrap.less'
-
+    bootstrapLess: './node_modules/bootstrap/less/bootstrap.less',
 };
 
 // runs browserify on app.js and minifies js
