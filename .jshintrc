@@ -1,5 +1,6 @@
 {
   "globals": {
+    "angular": true,
     "jasmine": false,
     "spyOn": false,
     "it": false,
@@ -15,7 +16,7 @@
   "node" : true,
   "esnext" : true,
   "browser" : true,
-
+  "browserify": true,
   "boss" : false,
   "curly": false,
   "debug": false,

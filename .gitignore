@@ -21,3 +21,7 @@ node_modules
 
 ## private properties(api keys, etc)
 config/privateProperties.js
+
+## ignore files generated from build
+webapp/public/*.js
+webapp/public*/*.css
