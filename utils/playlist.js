@@ -10,8 +10,14 @@ var appProperties = require('../config/appProperties');
 
 module.exports = {
     /**
+     *
+     */
+
+    /**
      * Gets a playlist from echonest for the artist given
-     * @param artist - name of artist to generate playlist from
+     * @param artist -      name of artist to generate playlist from
+     * @returns {Promise} - Resolves on successful call to echonest API. Rejects on unsuccessful call or if the
+     *                      response is not in the expected format.
      */
     retrievePlaylistForArtist: function (artist) {
         let playlistProperties = {
@@ -38,9 +44,9 @@ module.exports = {
 
     /**
      * Picks a random, previously unselected song from the playlist provided
-     * @param allSongs - full playlist of songs to pick a random song from
-     * @param usedIndices - indices of already picked songs
-     * @returns {{artist: string, title: (string)}} - song chosen
+     * @param allSongs -                                full playlist of songs to pick a random song from
+     * @param usedIndices -                             indices of already picked songs
+     * @returns {{artist: string, title: (string)}} -   song chosen
      */
     pickRandomSong: function (allSongs, usedIndices) {
         let allSongsIdx = random.randomIntInc(0, allSongs.length);
@@ -58,9 +64,10 @@ module.exports = {
 
     /**
      * Get a Spotify preview URL for the song specified by artist and track
-     * @param artist - artist of song to retrieve preview url for
-     * @param title - title of song to retrieve preview url fo
-     * @param callback - function to send results to ( previewUrl, err )
+     * @param artist -      artist of song to retrieve preview url for
+     * @param title -       title of song to retrieve preview url fo
+     * @returns {Promise} - resolves on successful call to the Spotify API.  Rejects on unsuccessful call or if
+     *                      the response is not in the expected format.
      */
     getPreviewUrlForSong: function (artist, title) {
         let spotifyProperties = {

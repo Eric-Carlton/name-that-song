@@ -50,6 +50,40 @@ server.get('/name-that-song/playlist/reset', function (req, res, next) {
 });
 
 server.get('/name-that-song/song/random', function (req, res, next) {
+    function getRandomSong(){
+        var song = playlist.pickRandomSong(allSongs, pickedSongs);
+
+        playlist.getPreviewUrlForSong(song.artist, song.title).then(
+            //preview url received, pass it along
+            function (previewUrl) {
+                songFound(previewUrl);
+            },
+            //no preview url, send 500 to indicate that another song must be picked
+            function () {
+                //remove last song, it won't count against songs picked
+                let invalidSongIdx = pickedSongs.pop();
+                allSongs.splice(invalidSongIdx, 1);
+                /*
+                * allSongs has changed. If any songs were picked whose index was after that of the removed
+                * song, they are now at their old index - 1.  pickedSongs must be adjusted to ensure that
+                * no duplicate songs are picked
+                */
+                for(let pickedSongsIdx = 0; pickedSongsIdx < pickedSongs.length; pickedSongsIdx++){
+                    if(pickedSongsIdx >= invalidSongIdx){
+                        pickedSongs[pickedSongsIdx]--;
+                    }
+                }
+
+                //get another random song
+                getRandomSong();
+            });
+    }
+
+    function songFound(previewUrl){
+        res.send(200, {url: previewUrl});
+        return next();
+    }
+
     //playlist not yet generated, send 404
     if (allSongs.length <= 0) {
         res.send(404, {error: 'Playlist Empty. First generate a playlist from the /playlist/:artist route'});
@@ -65,19 +99,7 @@ server.get('/name-that-song/song/random', function (req, res, next) {
     }
     //pick a random song
     else {
-        var song = playlist.pickRandomSong(allSongs, pickedSongs);
-
-        playlist.getPreviewUrlForSong(song.artist, song.title).then(
-            //preview url received, pass it along
-            function (previewUrl) {
-                res.send(200, {url: previewUrl});
-                return next();
-            },
-            //no preview url, send 500 to indicate that another song must be picked
-            function (err) {
-                res.send(500, err);
-                return next();
-            });
+        getRandomSong();
     }
 });
 
