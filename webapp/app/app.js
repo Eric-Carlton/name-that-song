@@ -6,7 +6,7 @@ var angular = require('angular');
 $ = jQuery = require('jquery');
 var bootstrap = require('bootstrap');
 /* jshint ignore:end */
-require('./components/chooseArtist.js');
+require('./controllers/chooseArtist.js');
 
 var app = angular.module('nameThatSong', [
     'nameThatSong.chooseArtist'
@@ -15,7 +15,7 @@ var app = angular.module('nameThatSong', [
 app.directive('chooseArtist', function(){
     return {
         restrict: 'E',
-        templateUrl: 'templates/chooseArtist.html',
+        templateUrl: 'templates/choose_artist.html',
         controller: 'ChooseArtistCtrl'
     };
 });

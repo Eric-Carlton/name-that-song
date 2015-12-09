@@ -2,25 +2,32 @@
 const gulp = require('gulp');
 const less = require('gulp-less');
 const browserify = require('gulp-browserify');
-var uglify = require('gulp-uglify');
-var minifyCss = require('gulp-minify-css');
-var concatCss = require('gulp-concat-css');
+const uglify = require('gulp-uglify');
+const minifyCss = require('gulp-minify-css');
+const concatCss = require('gulp-concat-css');
+const del = require('del');
+const runSequence = require('run-sequence');
 
 
 const paths = {
     allLess: 'webapp/app/less/*.js',
     appLess: 'webapp/app/less/app.less',
     appJs: 'webapp/app/app.js',
-    allJs: 'webapp/app/components/**/*.js',
+    allJs: 'webapp/app/controllers/*.js',
     jquery: './node_modules/jquery/dist/jquery.js',
     bootstrap: './node_modules/bootstrap/dist/js/bootstrap.js',
     bootstrapLess: './node_modules/bootstrap/less/bootstrap.less',
+    builtJs: 'webapp/public/app.js',
+    builtCss: 'webapp/public/app.css'
 };
+
+gulp.task('clean', function() {
+    return del([paths.builtJs, paths.builtCss]);
+});
 
 // runs browserify on app.js and minifies js
 gulp.task('scripts', function() {
-    // Single entry point to browserify
-    gulp.src(paths.appJs)
+     return gulp.src(paths.appJs)
         .pipe(browserify({
             insertGlobals : true
         }))
@@ -30,7 +37,7 @@ gulp.task('scripts', function() {
 
 // Compiles LESS > CSS and minifies CSS
 gulp.task('less', function(){
-    gulp.src([paths.appLess, paths.bootstrapLess])
+    return gulp.src([paths.appLess, paths.bootstrapLess])
         .pipe(less())
         .pipe(concatCss('app.css'))
         .pipe(minifyCss())
@@ -46,4 +53,7 @@ gulp.task('watch', function(){
 });
 
 
-gulp.task('default', ['less', 'scripts', 'watch']);
+gulp.task('default', function() {
+    runSequence('clean',
+        ['less', 'scripts']);
+});
