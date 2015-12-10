@@ -10,7 +10,7 @@ const runSequence = require('run-sequence');
 
 
 const paths = {
-    allLess: 'webapp/app/less/*.js',
+    allLess: 'webapp/app/less/**/*.less',
     appLess: 'webapp/app/less/app.less',
     appJs: 'webapp/app/app.js',
     allJs: 'webapp/app/controllers/*.js',

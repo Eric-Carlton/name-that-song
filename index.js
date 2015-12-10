@@ -9,6 +9,14 @@ const server = restify.createServer({
     version: '0.0.1'
 });
 
+server.use(
+    function crossOrigin(req,res,next){
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Headers", "X-Requested-With");
+        return next();
+    }
+);
+
 server.use(restify.acceptParser(server.acceptable));
 server.use(restify.queryParser());
 server.use(restify.bodyParser());
@@ -17,6 +25,10 @@ var allSongs = [];
 var pickedSongs = [];
 
 server.get('/name-that-song/playlist/generate/:artist', function (req, res, next) {
+    //reset allSongs and pickedSongs
+    allSongs = [];
+    pickedSongs = [];
+
     //generate playlist from artist given
     playlist.retrievePlaylistForArtist(req.params['artist']).then(function (playlist) {
         //check that playlist has been given in correct format
@@ -37,16 +49,6 @@ server.get('/name-that-song/playlist/generate/:artist', function (req, res, next
         res.send(500, err);
         return next();
     });
-});
-
-server.get('/name-that-song/playlist/reset', function (req, res, next) {
-    //reset allSongs and pickedSongs
-    allSongs = [];
-    pickedSongs = [];
-
-    //send success message
-    res.send(200);
-    return next();
 });
 
 server.get('/name-that-song/song/random', function (req, res, next) {

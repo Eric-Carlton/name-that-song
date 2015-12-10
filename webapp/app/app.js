@@ -6,10 +6,12 @@ var angular = require('angular');
 $ = jQuery = require('jquery');
 var bootstrap = require('bootstrap');
 /* jshint ignore:end */
-require('./controllers/chooseArtist.js');
+require('./controllers/ChooseArtistCtrl.js');
+require('./services/PlaylistService.js');
 
 var app = angular.module('nameThatSong', [
-    'nameThatSong.chooseArtist'
+    'nameThatSong.chooseArtist',
+    'nameThatSong.playlist'
 ]);
 
 app.directive('chooseArtist', function(){

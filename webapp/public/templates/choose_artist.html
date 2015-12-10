@@ -1,3 +1,11 @@
-<div class="col-md-8">
-    {{text}}
+<div class="col-md-8" ide="choose-artist-container">
+    <form class="col-md-8 col-md-offset-2">
+        <div class="input-group">
+            <span class="input-group-addon" id="basic-addon1">{{artistLblText}}</span>
+            <input class="form-control" type="text" placeholder="Artist name..." ng-model="artist"/>
+        </div>
+        <button class="btn-block btn-primary" type="button" ng-click="generatePlaylist()">Generate Playlist</button>
+        <div class="alert alert-danger" role="alert" ng-show="error">{{errorMessage}}</div>
+        <div class="alert alert-success" role="alert" ng-show="success">{{successMessage}}</div>
+    </form>
 </div>
