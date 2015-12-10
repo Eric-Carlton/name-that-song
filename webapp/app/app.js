@@ -2,10 +2,12 @@
  * Created by ericcarlton on 12/8/15.
  */
 var angular = require('angular');
+
 /* jshint ignore:start */
 $ = jQuery = require('jquery');
-var bootstrap = require('bootstrap');
+const bootstrap = require('bootstrap');
 /* jshint ignore:end */
+
 require('./controllers/ChooseArtistCtrl.js');
 require('./services/PlaylistService.js');
 

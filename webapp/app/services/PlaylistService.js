@@ -2,6 +2,8 @@
  * Created by ericcarlton on 12/9/15.
  */
 'use strict';
+
+const serviceProperties = require('../config/serviceProperties.json');
 (
     function(){
         angular.module('nameThatSong.playlist', []).service(
@@ -9,7 +11,8 @@
                 this.getPlaylist = function(artist){
                     return $http({
                         method: 'GET',
-                        url: 'http://localhost:8008//name-that-song/playlist/generate/' + artist
+                        url: serviceProperties.host + serviceProperties.generatePlaylistRoute + artist,
+                        timeout: serviceProperties.timeout
                     });
                 };
             }]
