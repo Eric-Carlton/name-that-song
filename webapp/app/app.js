@@ -10,15 +10,19 @@ const bootstrap = require('bootstrap');
 
 require('./controllers/ChooseArtistCtrl.js');
 require('./controllers/StartGameCtrl.js');
+require('./controllers/GuessSongCtrl.js');
 
 require('./services/PlaylistService.js');
 require('./services/SongService.js');
+require('./services/GuessService.js');
 
 var app = angular.module('nameThatSong', [
     'nameThatSong.chooseArtist',
     'nameThatSong.startGame',
     'nameThatSong.playlist',
-    'nameThatSong.song'
+    'nameThatSong.song',
+    'nameThatSong.guessSong',
+    'nameThatSong.guess'
 ]);
 
 app.directive('chooseArtist', function () {
@@ -35,4 +39,11 @@ app.directive('chooseArtist', function () {
             controller: 'StartGameCtrl'
         };
 
+    })
+    .directive('guessSong', function () {
+        return {
+            restrict: 'E',
+            templateUrl: 'templates/guess_song.html',
+            controller: 'GuessSongCtrl'
+        };
     });

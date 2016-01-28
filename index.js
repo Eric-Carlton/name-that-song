@@ -137,9 +137,10 @@ server.get('/name-that-song/song/random', function (req, res, next) {
 
     //playlist not yet generated, send 404
     if (allSongs.length <= 0) {
+        const response = {error: 'Playlist Empty. First generate a playlist from the /playlist/:artist route'};
         log.error('No playlist generated');
-        log.trace('Exiting: /song/random');
-        res.send(404, {error: 'Playlist Empty. First generate a playlist from the /playlist/:artist route'});
+        log.debug({response: response}, 'Sending response from /song/random');
+        res.send(404, response);
         return next();
     }
     //maximum number of songs picked from playlist, send 403
@@ -158,6 +159,15 @@ server.get('/name-that-song/song/random', function (req, res, next) {
     else {
         getRandomSong();
     }
+});
+
+server.post('/name-that-song/song/guess', function(req, res, next){
+    log.debug({params: req.params, ipAddress:req.connection.remoteAddress}, 'request to /name-that-song/song/guess');
+
+    const response = {correct: true, score: 1};
+    log.debug({response: response}, 'Sending response from /name-that-song/song/guess');
+    res.send(200, response);
+    return next();
 });
 
 server.listen(appProperties.port, function () {

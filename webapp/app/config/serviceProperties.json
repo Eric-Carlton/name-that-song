@@ -2,5 +2,6 @@
     "host": "http://localhost:8008/name-that-song",
     "generatePlaylistRoute": "/playlist/generate/",
     "randomSongRoute": "/song/random",
+    "guessSongRoute": "/song/guess",
     "timeout": 15000
 }
