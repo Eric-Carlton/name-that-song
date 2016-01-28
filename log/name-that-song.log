@@ -1,0 +1,10 @@
+{"name":"name-that-song","hostname":"Erics-MacBook-Pro.local","pid":46301,"level":20,"msg":"name-that-song listening at http://[::]:8008","time":"2016-01-28T00:02:30.054Z","v":0}
+{"name":"name-that-song","hostname":"Erics-MacBook-Pro.local","pid":46301,"level":10,"msg":"Entering: /playlist/generate/:artist","time":"2016-01-28T00:02:47.803Z","v":0}
+{"name":"name-that-song","hostname":"Erics-MacBook-Pro.local","pid":46301,"level":10,"msg":"Resetting allSongs and pickedSongs","time":"2016-01-28T00:02:47.804Z","v":0}
+{"name":"name-that-song","hostname":"Erics-MacBook-Pro.local","pid":46301,"level":20,"msg":"Requesting playlist for artist System of a Down","time":"2016-01-28T00:02:47.804Z","v":0}
+{"name":"name-that-song","hostname":"Erics-MacBook-Pro.local","pid":46301,"level":20,"msg":"Playlist retrieved with length: 200","time":"2016-01-28T00:02:48.724Z","v":0}
+{"name":"name-that-song","hostname":"Erics-MacBook-Pro.local","pid":46301,"level":10,"msg":"Exiting: /playlist/generate/:artist","time":"2016-01-28T00:02:48.724Z","v":0}
+{"name":"name-that-song","hostname":"Erics-MacBook-Pro.local","pid":46301,"level":10,"msg":"Entering: /song/random","time":"2016-01-28T00:02:56.460Z","v":0}
+{"name":"name-that-song","hostname":"Erics-MacBook-Pro.local","pid":46301,"level":20,"msg":"Requesting song from Spotify: {\"artist\":\"Staind\",\"title\":\"Right Here\"}","time":"2016-01-28T00:02:56.460Z","v":0}
+{"name":"name-that-song","hostname":"Erics-MacBook-Pro.local","pid":46301,"level":20,"msg":"PreviewUrl retrieved: https://p.scdn.co/mp3-preview/79215afbb1dbe2f2ebabc5963a4d40fc08660ab1","time":"2016-01-28T00:02:57.192Z","v":0}
+{"name":"name-that-song","hostname":"Erics-MacBook-Pro.local","pid":46301,"level":10,"msg":"Exiting: /song/random","time":"2016-01-28T00:02:57.192Z","v":0}
