@@ -2,11 +2,10 @@
  * Created by ericcarlton on 12/7/15.
  */
 'use strict';
-
-var request = require('request');
-var random = require('./random');
-var privateProperties = require('../config/privateProperties');
-var appProperties = require('../config/appProperties');
+const request = require('request');
+const random = require('./random');
+const privateProperties = require('../config/privateProperties');
+const appProperties = require('../config/appProperties');
 
 module.exports = {
     /**
