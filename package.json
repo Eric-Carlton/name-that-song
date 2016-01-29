@@ -13,6 +13,7 @@
     "angular": "^1.4.8",
     "angular-route": "^1.4.8",
     "bootstrap": "^3.3.6",
+    "bunyan": "^1.5.1",
     "restify": "^4.0.3"
   },
   "devDependencies": {
