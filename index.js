@@ -1,7 +1,12 @@
 'use strict';
 const bunyan = require('bunyan');
+const restify = require('restify');
+const playlist = require('./utils/playlist');
+const appProperties = require('./config/appProperties');
+
 const log = bunyan.createLogger({
     name: 'name-that-song',
+    //TODO: rolling log files!
     streams: [
         {
             level: 'trace',
@@ -13,10 +18,6 @@ const log = bunyan.createLogger({
         }
     ]
 });
-
-const restify = require('restify');
-const playlist = require('./utils/playlist');
-const appProperties = require('./config/appProperties');
 
 const server = restify.createServer({
     name: 'name-that-song',
@@ -42,13 +43,12 @@ server.get('/name-that-song/playlist/generate/:artist', function (req, res, next
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /playlist/generate/:artist');
 
     //reset allSongs and pickedSongs
-    log.trace('Resetting allSongs and pickedSongs');
     allSongs = [];
     pickedSongs = [];
 
     //generate playlist from artist given
-    log.trace({artist: req.params['artist']}, 'Requesting playlist for artist');
-    playlist.retrievePlaylistForArtist(req.params['artist']).then(function (playlist) {
+    playlist.retrievePlaylistForArtist(req.params['artist']).then((playlist) => {
+
         //check that playlist has been given in correct format
         if (playlist.hasOwnProperty('response') &&
             playlist.response.hasOwnProperty('songs') &&
@@ -60,22 +60,23 @@ server.get('/name-that-song/playlist/generate/:artist', function (req, res, next
                 songsLeft: appProperties.playlistLength - pickedSongs.length
             };
 
-            log.trace({length:playlist.response.songs.length}, 'Playlist retrieved ');
             log.debug({response: response}, 'sending response from /playlist/generate/:artist');
+
             //all good, send success
             res.send(200, response);
         } else {
             const response = {error: 'No songs retrieved, please pick a different artist'};
+
             log.error('No songs retrieved');
             log.debug({response: response}, 'sending response from /playlist/generate/:artist');
+
             //no songs retrieved for artist, send 404
             res.send(404, response);
         }
         return next();
-    }, function (err) {
-        const response = {error: err};
+    }, () => {
+        const response = {error: 'Error retrieving playlist. Please try again later'};
 
-        log.error({error: err}, 'Echonest error');
         log.debug({response: response}, 'sending response from /playlist/generate/:artist');
 
         //error sent from echonest, bubble up
@@ -84,12 +85,13 @@ server.get('/name-that-song/playlist/generate/:artist', function (req, res, next
     });
 });
 
+//TODO: This is a mess.  Refactor.
 server.get('/name-that-song/song/random', function (req, res, next) {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'request to /song/random');
 
     function getRandomSong() {
         var song = playlist.pickRandomSong(allSongs, pickedSongs);
-        log.debug({song: song},'Requesting song from Spotify');
+        log.debug({song: song}, 'Requesting song from Spotify');
         playlist.getPreviewUrlForSong(song.artist, song.title).then(
             //preview url received, pass it along
             function (previewUrl) {
@@ -109,13 +111,13 @@ server.get('/name-that-song/song/random', function (req, res, next) {
                  * song, they are now at their old index - 1.  pickedSongs must be adjusted to ensure that
                  * no duplicate songs are picked
                  */
-                log.trace({pickedSongs: pickedSongs},'pickedSongs before adjustment');
+                log.trace({pickedSongs: pickedSongs}, 'pickedSongs before adjustment');
                 for (let pickedSongsIdx = 0; pickedSongsIdx < pickedSongs.length; pickedSongsIdx++) {
                     if (pickedSongsIdx >= invalidSongIdx) {
                         pickedSongs[pickedSongsIdx]--;
                     }
                 }
-                log.trace({pickedSongs: pickedSongs},'pickedSongs after adjustment');
+                log.trace({pickedSongs: pickedSongs}, 'pickedSongs after adjustment');
 
                 //get another random song
                 getRandomSong();
@@ -129,7 +131,7 @@ server.get('/name-that-song/song/random', function (req, res, next) {
             songsLeft: appProperties.playlistLength - pickedSongs.length
         };
 
-        log.debug({previewUrl: previewUrl},'PreviewUrl retrieved');
+        log.debug({previewUrl: previewUrl}, 'PreviewUrl retrieved');
         log.debug({response: response}, 'Sending response from /song/random');
         res.send(200, response);
         return next();
@@ -161,8 +163,8 @@ server.get('/name-that-song/song/random', function (req, res, next) {
     }
 });
 
-server.post('/name-that-song/song/guess', function(req, res, next){
-    log.debug({params: req.params, ipAddress:req.connection.remoteAddress}, 'request to /name-that-song/song/guess');
+server.post('/name-that-song/song/guess', function (req, res, next) {
+    log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'request to /name-that-song/song/guess');
 
     const response = {correct: true, score: 1};
     log.debug({response: response}, 'Sending response from /name-that-song/song/guess');

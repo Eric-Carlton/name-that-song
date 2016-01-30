@@ -2,10 +2,25 @@
  * Created by ericcarlton on 12/7/15.
  */
 'use strict';
+const bunyan = require('bunyan');
 const request = require('request');
 const random = require('./random');
 const privateProperties = require('../config/privateProperties');
 const appProperties = require('../config/appProperties');
+
+const log = bunyan.createLogger({
+    name: 'name-that-song',
+    streams: [
+        {
+            level: 'trace',
+            stream: process.stdout         // log INFO and above to stdout
+        },
+        {
+            level: 'trace',
+            path: 'log/name-that-song.log'
+        }
+    ]
+});
 
 module.exports = {
     /**
@@ -19,7 +34,8 @@ module.exports = {
      *                      response is not in the expected format.
      */
     retrievePlaylistForArtist: function (artist) {
-        let playlistProperties = {
+        const echonestUri = 'http://developer.echonest.com/api/v4/playlist/basic';
+        const playlistProperties = {
             api_key: privateProperties.echonestApiKey,
             artist: artist,
             format: appProperties.echonestFormat,
@@ -27,15 +43,24 @@ module.exports = {
             type: appProperties.echonestType
         };
 
-        return new Promise(function(resolve, reject){
+        return new Promise(function (resolve, reject) {
+            log.debug({uri: echonestUri, request: playlistProperties}, 'Sending request for playlist');
             request({
-                url: 'http://developer.echonest.com/api/v4/playlist/basic',
+                url: echonestUri,
                 qs: playlistProperties
-            }, function (err, response, body) {
-                if (err) {
-                    reject(err);
+            }, (err, response, body) => {
+                if (!err && response.statusCode === 200) {
+                    const playlist = JSON.parse(body);
+                    log.debug({playlist: playlist}, 'Received playlist');
+                    resolve(playlist);
                 } else {
-                    resolve(JSON.parse(body));
+                    if(response){
+                        log.error({statusCode: response.statusCode}, 'Request for playlist returned status code other than 200');
+                    }
+                    if (err) {
+                        log.error({error: err}, 'Received error while request playlist');
+                    }
+                    reject();
                 }
             });
         });
@@ -74,7 +99,7 @@ module.exports = {
             q: title + ' artist:' + artist
         };
 
-        return new Promise(function(resolve, reject){
+        return new Promise(function (resolve, reject) {
             request({url: 'https://api.spotify.com/v1/search', qs: spotifyProperties}, function (err, response, body) {
                 if (err) {
                     reject(err);
