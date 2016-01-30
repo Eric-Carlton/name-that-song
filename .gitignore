@@ -25,6 +25,7 @@ app/config/privateProperties.js
 ## ignore files generated from build
 webapp/public/*.js
 webapp/public*/*.css
+webapp/public*/*.map
 
 ##ignore logs
 app/log/
