@@ -17,10 +17,19 @@ const serviceProperties = require('../config/serviceProperties.json');
                 _this.playlistLength = 0;
                 _this.songsLeft = 0;
 
-                return $http({
-                    method: 'GET',
-                    url: serviceProperties.host + serviceProperties.generatePlaylistRoute + artist,
-                    timeout: serviceProperties.timeout
+                return new Promise((resolve, reject) => {
+                    $http({
+                        method: 'GET',
+                        url: serviceProperties.host + serviceProperties.generatePlaylistRoute + artist,
+                        timeout: serviceProperties.timeout
+                    }).then((res) => {
+                        _this.songsLeft = res.data.songsLeft;
+                        _this.playlistLength = res.data.playlistLength;
+
+                        resolve();
+                    }, () => {
+                        reject();
+                    });
                 });
             };
 
@@ -33,7 +42,7 @@ const serviceProperties = require('../config/serviceProperties.json');
                     }).then((response) => {
                         _this.playlistLength = response.data.playlistLength;
                         _this.songsLeft = response.data.songsLeft;
-                        
+
                         $rootScope.$broadcast("newSongReceived", {url: response.data.url});
 
                         resolve();
