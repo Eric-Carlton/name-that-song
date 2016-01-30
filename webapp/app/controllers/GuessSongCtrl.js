@@ -5,7 +5,7 @@
 
 (function () {
     angular.module('nameThatSong.guessSong', []).controller(
-        'GuessSongCtrl', ['$scope', 'GuessService', function ($scope, GuessService) {
+        'GuessSongCtrl', ['$scope', 'GuessService', function($scope, GuessService){
             $scope.sectionHeadingTxt = 'Name That Song!';
 
             $scope.error = false;
@@ -22,7 +22,7 @@
 
             $scope.submitBtnTxt = 'Submit Guess';
 
-            $scope.makeGuess = function(){
+            $scope.makeGuess = () => {
                 GuessService.makeGuess($scope.songGuessed, $scope.artistGuessed);
             };
         }]

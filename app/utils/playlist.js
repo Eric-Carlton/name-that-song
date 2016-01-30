@@ -12,12 +12,15 @@ const log = bunyan.createLogger({
     name: 'name-that-song',
     streams: [
         {
-            level: 'trace',
-            stream: process.stdout         // log INFO and above to stdout
+            level: 'debug',
+            stream: process.stdout
         },
         {
+            type: 'rotating-file',
+            path: 'log/name-that-song-trace.log',
             level: 'trace',
-            path: 'log/name-that-song.log'
+            period: '1d',
+            count: 7
         }
     ]
 });
@@ -33,7 +36,7 @@ module.exports = {
      * @returns {Promise} - Resolves on successful call to echonest API. Rejects on unsuccessful call or if the
      *                      response is not in the expected format.
      */
-    retrievePlaylistForArtist: function (artist) {
+    retrievePlaylistForArtist: (artist) => {
         const echonestUri = 'http://developer.echonest.com/api/v4/playlist/basic';
         const playlistProperties = {
             api_key: privateProperties.echonestApiKey,
@@ -43,7 +46,7 @@ module.exports = {
             type: appProperties.echonestType
         };
 
-        return new Promise(function (resolve, reject) {
+        return new Promise((resolve, reject) => {
             log.debug({uri: echonestUri, request: playlistProperties}, 'Sending request for playlist');
             request({
                 url: echonestUri,
@@ -54,7 +57,7 @@ module.exports = {
                     log.debug({playlist: playlist}, 'Received playlist');
                     resolve(playlist);
                 } else {
-                    if(response){
+                    if (response) {
                         log.error({statusCode: response.statusCode}, 'Request for playlist returned status code other than 200');
                     }
                     if (err) {
@@ -72,7 +75,9 @@ module.exports = {
      * @param usedIndices -                             indices of already picked songs
      * @returns {{artist: string, title: (string)}} -   song chosen
      */
-    pickRandomSong: function (allSongs, usedIndices) {
+    pickRandomSong: (allSongs, usedIndices) => {
+        log.trace('Selecting song at random');
+
         let allSongsIdx = random.randomIntInc(0, allSongs.length);
 
         while (usedIndices.indexOf(allSongsIdx) > -1) {
@@ -80,10 +85,14 @@ module.exports = {
         }
 
         usedIndices.push(allSongsIdx);
-        return {
+
+        const randomSong = {
             artist: allSongs[allSongsIdx].artist_name,
             title: allSongs[allSongsIdx].title
         };
+        log.debug({song: randomSong}, 'Selected song');
+
+        return randomSong;
     },
 
     /**
@@ -93,26 +102,41 @@ module.exports = {
      * @returns {Promise} - resolves on successful call to the Spotify API.  Rejects on unsuccessful call or if
      *                      the response is not in the expected format.
      */
-    getPreviewUrlForSong: function (artist, title) {
-        let spotifyProperties = {
-            type: 'track',
-            q: title + ' artist:' + artist
+    getPreviewUrlForSong: (artist, title) => {
+        const previewRequest = {
+            url: 'https://api.spotify.com/v1/search',
+            qs: {
+                type: 'track',
+                q: title + ' artist:' + artist
+            }
         };
 
-        return new Promise(function (resolve, reject) {
-            request({url: 'https://api.spotify.com/v1/search', qs: spotifyProperties}, function (err, response, body) {
-                if (err) {
-                    reject(err);
-                } else {
-                    var song = JSON.parse(body);
+        return new Promise((resolve, reject) => {
+            log.debug({request: previewRequest}, 'Sending request for preview url');
+            request(previewRequest, (err, response, body) => {
+                if(!err && response.statusCode === 200){
+                    const song = JSON.parse(body);
+
                     if (song.hasOwnProperty('tracks') &&
                         song.tracks.hasOwnProperty('items') &&
                         song.tracks.items.length > 0 &&
                         song.tracks.items[0].hasOwnProperty('preview_url')) {
+
+                        log.debug({previewUrl: song.tracks.items[0].preview_url}, 'Preview URL retrieved from Spotify');
+
                         resolve(song.tracks.items[0].preview_url);
                     } else {
-                        reject({err: 'no songs received'});
+                        log.error('No preview URL retrieved');
+                        reject();
                     }
+                } else {
+                    if (response) {
+                        log.error({statusCode: response.statusCode}, 'Request for preview URL returned status code other than 200');
+                    }
+                    if (err) {
+                        log.error({error: err}, 'Received error while requesting preview URL');
+                    }
+                    reject();
                 }
             });
         });

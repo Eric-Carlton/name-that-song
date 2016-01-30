@@ -20,11 +20,11 @@ node_modules
 *.iws
 
 ## private properties(api keys, etc)
-config/privateProperties.js
+app/config/privateProperties.js
 
 ## ignore files generated from build
 webapp/public/*.js
 webapp/public*/*.css
 
 ##ignore logs
-log/
+app/log/

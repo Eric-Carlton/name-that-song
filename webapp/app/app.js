@@ -1,12 +1,12 @@
 /**
  * Created by ericcarlton on 12/8/15.
  */
-var angular = require('angular');
-
+'use strict';
 /* jshint ignore:start */
-$ = jQuery = require('jquery');
 const bootstrap = require('bootstrap');
 /* jshint ignore:end */
+
+let angular = require('angular');
 
 require('./controllers/ChooseArtistCtrl.js');
 require('./controllers/StartGameCtrl.js');
@@ -16,7 +16,7 @@ require('./services/PlaylistService.js');
 require('./services/SongService.js');
 require('./services/GuessService.js');
 
-var app = angular.module('nameThatSong', [
+let app = angular.module('nameThatSong', [
     'nameThatSong.chooseArtist',
     'nameThatSong.startGame',
     'nameThatSong.playlist',
@@ -25,14 +25,14 @@ var app = angular.module('nameThatSong', [
     'nameThatSong.guess'
 ]);
 
-app.directive('chooseArtist', function () {
+app.directive('chooseArtist', () => {
         return {
             restrict: 'E',
             templateUrl: 'templates/choose_artist.html',
             controller: 'ChooseArtistCtrl'
         };
     })
-    .directive('startGame', function () {
+    .directive('startGame', () => {
         return {
             restrict: 'E',
             templateUrl: 'templates/start_game.html',
@@ -40,7 +40,7 @@ app.directive('chooseArtist', function () {
         };
 
     })
-    .directive('guessSong', function () {
+    .directive('guessSong', () => {
         return {
             restrict: 'E',
             templateUrl: 'templates/guess_song.html',

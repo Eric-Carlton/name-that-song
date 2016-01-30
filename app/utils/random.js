@@ -9,7 +9,7 @@ module.exports = {
      * @param high - high end of random range
      * @returns {number} - random integer between low and high, inclusive
      */
-    randomIntInc: function (low, high) {
+    randomIntInc: (low, high) => {
         return Math.floor(Math.random() * (high - low + 1) + low);
     }
 };

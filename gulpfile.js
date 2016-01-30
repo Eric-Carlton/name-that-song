@@ -1,7 +1,12 @@
 'use strict';
 const gulp = require('gulp');
 const less = require('gulp-less');
-const browserify = require('gulp-browserify');
+const browserify = require('browserify');
+const gutil = require('gulp-util');
+const source = require('vinyl-source-stream');
+var buffer = require('vinyl-buffer');
+const to5ify = require('6to5ify');
+const sourcemaps = require('gulp-sourcemaps');
 const uglify = require('gulp-uglify');
 const minifyCss = require('gulp-minify-css');
 const concatCss = require('gulp-concat-css');
@@ -21,22 +26,26 @@ const paths = {
     builtCss: 'webapp/public/app.css'
 };
 
-gulp.task('clean', function() {
+gulp.task('clean', function () {
     return del([paths.builtJs, paths.builtCss]);
 });
 
 // runs browserify on app.js and minifies js
-gulp.task('scripts', function() {
-     return gulp.src(paths.appJs)
-        .pipe(browserify({
-            insertGlobals : true
-        }))
+gulp.task('scripts', function () {
+    return browserify(paths.appJs, { debug: true })
+        .transform(to5ify)
+        .bundle()
+        .on('error', gutil.log.bind(gutil, 'Browserify Error'))
+        .pipe(source('app.js'))
+        .pipe(buffer())
+        .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
         .pipe(uglify())
+        .pipe(sourcemaps.write('.')) // writes .map file
         .pipe(gulp.dest('./webapp/public'));
 });
 
 // Compiles LESS > CSS and minifies CSS
-gulp.task('less', function(){
+gulp.task('less', function () {
     return gulp.src([paths.appLess, paths.bootstrapLess])
         .pipe(less())
         .pipe(concatCss('app.css'))
@@ -45,7 +54,7 @@ gulp.task('less', function(){
 });
 
 // Watches files for changes, runs appropriate task
-gulp.task('watch', function(){
+gulp.task('watch', function () {
     gulp.watch(paths.allLess, ['less']);
     gulp.watch(paths.appLess, ['less']);
     gulp.watch(paths.appJs, ['scripts']);
@@ -53,7 +62,7 @@ gulp.task('watch', function(){
 });
 
 
-gulp.task('default', function() {
+gulp.task('default', function () {
     runSequence('clean',
         ['less', 'scripts']);
 });
