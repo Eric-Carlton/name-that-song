@@ -24,6 +24,10 @@
 
             $scope.makeGuess = () => {
                 GuessService.makeGuess($scope.songGuessed, $scope.artistGuessed);
+
+                //clear inputs
+                $scope.artistGuessed = '';
+                $scope.songGuessed = '';
             };
         }]
     );
