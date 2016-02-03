@@ -36,11 +36,11 @@
                     $scope.success = true;
 
                     $scope.$apply();
-                }, () => {
+                }, (err) => {
                     $scope.loading = false;
                     $scope.generatePlaylistBtnText = generatePlaylistText;
 
-                    $scope.errorMessage = 'Unable to generate playlist for ' + $scope.artist + '. Please try again.';
+                    $scope.errorMessage = err.message;
                     $scope.success = false;
                     $scope.error = true;
 

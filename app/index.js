@@ -28,7 +28,7 @@ const server = restify.createServer({
 });
 
 server.use(
-     (req, res, next) => {
+    (req, res, next) => {
         res.header("Access-Control-Allow-Origin", "*");
         res.header("Access-Control-Allow-Headers", "X-Requested-With");
         return next();
@@ -56,7 +56,12 @@ server.get('/name-that-song/playlist/generate/:artist', (req, res, next) => {
             //all good, send success
             res.send(200, response);
         } else {
-            const response = {error: 'No songs retrieved, please pick a different artist'};
+            const response = {
+                error: {
+                    code: 1000,
+                    message: appProperties.errorMessages['1000']
+                }
+            };
 
             log.error('No songs retrieved');
             log.debug({response: response}, 'sending response from /playlist/generate/:artist');
@@ -66,12 +71,17 @@ server.get('/name-that-song/playlist/generate/:artist', (req, res, next) => {
         }
         return next();
     }, () => {
-        const response = {error: 'Error retrieving playlist. Please try again later'};
+        const response = {
+            error: {
+                code: 1000,
+                message: appProperties.errorMessages['1000']
+            }
+        };
 
         log.debug({response: response}, 'sending response from /playlist/generate/:artist');
 
         //error sent from echonest, bubble up
-        res.send(500, response);
+        res.send(404, response);
         return next();
     });
 });
@@ -81,19 +91,26 @@ server.get('/name-that-song/song/random', (req, res, next) => {
 
     //playlist not yet generated, send 404
     if (gameController.getAllSongsLength() <= 0) {
-        const response = {error: 'Playlist Empty. First generate a playlist from the /playlist/:artist route'};
+        const response = {
+            error: {
+                code: 1001,
+                message: appProperties.errorMessages['1001']
+            }
+        };
 
         log.error('No playlist generated');
         log.debug({response: response}, 'Sending response from /song/random');
 
-        res.send(404, response);
+        res.send(500, response);
         return next();
     }
     //maximum number of songs picked from playlist, send 403
     else if (gameController.getPickedSongsLength().length >= appProperties.playlistLength) {
         const response = {
-            error: appProperties.playlistLength + ' songs already chosen from this playlist. Please ' +
-            'generate a new playlist from the /playlist/:artist route'
+            error: {
+                code: 1002,
+                message: appProperties.errorMessages['1002']
+            }
         };
 
         log.error('Maximum songs retrieved from playlist');
@@ -117,7 +134,10 @@ server.get('/name-that-song/song/random', (req, res, next) => {
             return next();
         }, () => {
             const response = {
-                error: 'Spotify unable to generate previewUrl',
+                error: {
+                    code: '1003',
+                    message: appProperties.errorMessages['1003']
+                },
                 playlistLength: appProperties.playlistLength,
                 songsLeft: appProperties.playlistLength - gameController.getPickedSongsLength()
             };

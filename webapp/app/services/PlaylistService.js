@@ -27,8 +27,8 @@ const serviceProperties = require('../config/serviceProperties.json');
                         _this.playlistLength = res.data.playlistLength;
 
                         resolve();
-                    }, () => {
-                        reject();
+                    }, (err) => {
+                        reject(err);
                     });
                 });
             };
