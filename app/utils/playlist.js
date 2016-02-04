@@ -12,7 +12,7 @@ const log = bunyan.createLogger({
     name: 'name-that-song',
     streams: [
         {
-            level: 'debug',
+            level: 'trace',
             stream: process.stdout
         },
         {
@@ -114,21 +114,31 @@ module.exports = {
         return new Promise((resolve, reject) => {
             log.debug({request: previewRequest}, 'Sending request for preview url');
             request(previewRequest, (err, response, body) => {
-                if(!err && response.statusCode === 200){
-                    const song = JSON.parse(body);
+                if (!err && response.statusCode === 200) {
+                    const songs = JSON.parse(body);
 
-                    if (song.hasOwnProperty('tracks') &&
-                        song.tracks.hasOwnProperty('items') &&
-                        song.tracks.items.length > 0 &&
-                        song.tracks.items[0].hasOwnProperty('preview_url')) {
+                    if (songs.hasOwnProperty('tracks') &&
+                        songs.tracks.hasOwnProperty('items') &&
+                        songs.tracks.items.length > 0) {
 
-                        log.debug({previewUrl: song.tracks.items[0].preview_url}, 'Preview URL retrieved from Spotify');
+                        for (var songIdx = 0; songIdx < songs.tracks.items.length; songIdx++) {
+                            var song = songs.tracks.items[songIdx];
 
-                        resolve(song.tracks.items[0].preview_url);
-                    } else {
-                        log.error('No preview URL retrieved');
+                            if (song.name.toUpperCase() === title.toUpperCase()) {
+                                log.trace({songName: title, url: song.previewUrl}, 'Found match for song');
+                                if (song.hasOwnProperty('preview_url')) {
+                                    log.debug({previewUrl: song.preview_url}, 'Preview URL retrieved from Spotify');
+
+                                    resolve(song.preview_url);
+                                }
+                            }
+                        }
+
                         reject();
                     }
+                    log.error('No preview URL retrieved');
+                    reject();
+
                 } else {
                     if (response) {
                         log.error({statusCode: response.statusCode}, 'Request for preview URL returned status code other than 200');
