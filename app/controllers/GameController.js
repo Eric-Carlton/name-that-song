@@ -3,7 +3,6 @@
  */
 'use strict';
 
-const appProperties = require('../config/appProperties');
 const playlist = require('../utils/playlist');
 const bunyan = require('bunyan');
 
@@ -35,8 +34,8 @@ module.exports = {
         pickedSongs = [];
 
         return {
-            playlistLength: appProperties.playlistLength,
-            songsLeft: appProperties.playlistLength - pickedSongs.length
+            playlistLength: allSongs.length,
+            songsLeft: allSongs.length - pickedSongs.length
         };
     },
 

@@ -22,7 +22,16 @@ const serviceProperties = require('../config/serviceProperties.json');
                         _this.score = response.score;
                         resolve();
                     }, (err) => {
-                        reject(err);
+                        if (err && err.hasOwnProperty('data') && err.data && err.data.hasOwnProperty('error') &&
+                            err.data.error && err.data.error.hasOwnProperty('message') && err.data.error.message &&
+                            err.data.error.hasOwnProperty('code') && err.data.error.code) {
+                            reject(err.data.error);
+                        } else {
+                            reject({
+                                code: '0000',
+                                message: 'Unable to send guess. Please check internet connection and try again.'
+                            });
+                        }
                     });
                 });
             };

@@ -14,7 +14,6 @@
             this.retries = 3;
 
             $scope.error = false;
-            $scope.errorMessage = 'There appears to be an error retrieving songs.  Please generate a new playlist and try again';
 
             $scope.loading = false;
             $scope.startGameBtnText = startGameText;
@@ -35,7 +34,7 @@
                         $scope.startGameBtnText = startGameText;
 
                         $scope.$apply();
-                    }, () => {
+                    }, (err) => {
                         _this.retries--;
 
                         if(_this.retries > 0){
@@ -45,8 +44,12 @@
                             $scope.loading = false;
                             $scope.startGameBtnText = startGameText;
 
+                            //hide playlist generated successfully message
                             $scope.success = false;
+
                             $scope.error = true;
+                            $scope.errorMessage = err.message;
+                            $scope.canRequestNewSong = (err.code.toString() === '0000' || err.code.toString() === '1003');
                         }
 
                         $scope.$apply();

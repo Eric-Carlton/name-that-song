@@ -124,8 +124,8 @@ server.get('/name-that-song/song/random', (req, res, next) => {
         gameController.getRandomSong().then((previewUrl) => {
             const response = {
                 url: previewUrl,
-                playlistLength: appProperties.playlistLength,
-                songsLeft: appProperties.playlistLength - gameController.getPickedSongsLength()
+                playlistLength: gameController.getAllSongsLength(),
+                songsLeft: gameController.getAllSongsLength() - gameController.getPickedSongsLength()
             };
 
             log.debug({response: response}, 'Sending response from /song/random');
@@ -138,8 +138,8 @@ server.get('/name-that-song/song/random', (req, res, next) => {
                     code: '1003',
                     message: appProperties.errorMessages['1003']
                 },
-                playlistLength: appProperties.playlistLength,
-                songsLeft: appProperties.playlistLength - gameController.getPickedSongsLength()
+                playlistLength: gameController.getAllSongsLength(),
+                songsLeft: gameController.getAllSongsLength() - gameController.getPickedSongsLength()
             };
 
             log.debug({response}, 'Sending response from /song/random');
