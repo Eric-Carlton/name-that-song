@@ -4,6 +4,5 @@
         <input class="form-control" type="text" placeholder="Artist name..." ng-model="artist"/>
     </div>
     <button class="btn-block btn-primary" type="button" ng-click="generatePlaylist()" ng-disabled="loading">{{generatePlaylistBtnText}}</button>
-    <div class="alert alert-danger" role="alert" ng-show="error">{{errorMessage}}</div>
     <div class="alert alert-success" role="alert" ng-show="success">{{successMessage}}</div>
 </form>

@@ -8,6 +8,7 @@
     <title>Name that Song</title>
 </head>
 <body ng-app="nameThatSong">
+    <div id="error" class="alert alert-danger" role="alert" ng-show="error">{{errorMessage}}</div>
     <div class="col-md-4">
         <guess-song></guess-song>
     </div>

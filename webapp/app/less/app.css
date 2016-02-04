@@ -5,3 +5,6 @@ There is no no-color option ("less --help" for help)
   text-align: center;
   background-color: #337ab7;
 }
+#error{
+  text-align: center;
+}
