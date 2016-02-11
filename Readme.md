@@ -95,3 +95,7 @@ To prettify logging statements in the terminal, you can pipe the output through 
     node index.js | bunyan
 
 The server app will deploy to localhost on the port specified by the port property of app/config/appProperties.js ( this is defaulted to port 8008 )
+
+Known Issues
+------------
+* Source maps are not generating correctly
