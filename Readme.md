@@ -1,8 +1,5 @@
 Name That Song
 ==============
-
-Description
------------
 An automated version of a drinking game that my friends and I play.  The rules are fairly simple:
    * One person, called the moderator, chooses an artist for the game.
    * Create a playlist based on the artist - manually, we would use Spotify radio.
