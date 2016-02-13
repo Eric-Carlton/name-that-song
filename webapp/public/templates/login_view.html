@@ -1,0 +1,12 @@
+<form class="col-md-4 col-md-offset-4">
+    <div class="input-group">
+        <span class="input-group-addon">{{usernameLblTxt}}</span>
+        <input class="form-control" type="text" ng-model="username"/>
+    </div>
+    <div class="input-group">
+        <span class="input-group-addon">{{passwordLblTxt}}</span>
+        <input class="form-control" type="password" ng-model="password"/>
+    </div>
+    <button class="btn-block btn-primary" ng-click="login()" type="button" ng-disabled="loading">{{loginBtnTxt}}</button>
+    <div id="error" class="alert alert-danger" role="alert" ng-show="error">{{errorMessage}}</div>
+</form>

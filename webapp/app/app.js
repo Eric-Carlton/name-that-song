@@ -7,23 +7,43 @@ const bootstrap = require('bootstrap');
 /* jshint ignore:end */
 
 let angular = require('angular');
+require('angular-router-browserify')(angular);
 
+require('./controllers/GameCtrl.js');
 require('./controllers/ChooseArtistCtrl.js');
 require('./controllers/StartGameCtrl.js');
 require('./controllers/GuessSongCtrl.js');
+require('./controllers/LoginCtrl.js');
 
 require('./services/PlaylistService.js');
 require('./services/SongService.js');
 require('./services/GuessService.js');
+require('./services/UserService.js');
 
 let app = angular.module('nameThatSong', [
+    'ngRoute',
     'nameThatSong.chooseArtist',
     'nameThatSong.startGame',
     'nameThatSong.playlist',
     'nameThatSong.song',
     'nameThatSong.guessSong',
-    'nameThatSong.guess'
+    'nameThatSong.guess',
+    'nameThatSong.game',
+    'nameThatSong.login',
+    'nameThatSong.user'
 ]);
+
+app.config(['$routeProvider', ($routeProvider) => {
+    $routeProvider.when('/', {
+            templateUrl: 'templates/game_view.html',
+            controller: 'GameCtrl'
+        })
+        .when('/login', {
+            templateUrl: 'templates/login_view.html',
+            controller: 'LoginCtrl'
+        })
+        .otherwise({ redirectTo: '/' });
+}]);
 
 app.directive('chooseArtist', () => {
         return {

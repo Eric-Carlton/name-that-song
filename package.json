@@ -11,13 +11,14 @@
   "repository": "https://github.com/Eric-Carlton/name-that-song",
   "dependencies": {
     "angular": "^1.4.8",
-    "angular-route": "^1.4.8",
     "bootstrap": "^3.3.6",
     "bunyan": "^1.5.1",
+    "crypto-browserify": "^3.11.0",
     "mongodb": "^2.1.7",
     "restify": "^4.0.3"
   },
   "devDependencies": {
+    "angular-router-browserify": "0.0.2",
     "babel-preset-es2015": "^6.3.13",
     "babelify": "^7.2.0",
     "bootstrap": "^3.3.6",

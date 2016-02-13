@@ -3,5 +3,6 @@
     "generatePlaylistRoute": "/playlist/generate/",
     "randomSongRoute": "/song/random",
     "guessSongRoute": "/song/guess",
-    "timeout": 15000
+    "loginRoute": "/user/login",
+    "timeout": 3000
 }

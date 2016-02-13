@@ -7,6 +7,7 @@ const mongo = require('mongodb').MongoClient;
 const privateProperties = require('../config/privateProperties');
 const appProperties = require('../config/appProperties');
 const bunyan = require('bunyan');
+const crypto = require('crypto');
 
 const log = bunyan.createLogger({
     name: 'name-that-song',
@@ -28,10 +29,15 @@ const log = bunyan.createLogger({
 function insertUser(db, username, password) {
     log.trace({username: username}, 'Entered users.insertUser');
 
+    const salt = new Date().getTime() + crypto.randomBytes(256).toString('hex');
+    let sha512 = crypto.createHash('sha512');
+
+    password = sha512.update(salt + password, 'utf8').digest('hex');
+
     return new Promise((resolve, reject) => {
         const collection = db.collection('users');
 
-        collection.insertOne({username: username, password: password}, (err, result) => {
+        collection.insertOne({username: username, password: password, salt: salt}, (err, result) => {
             if (err) {
                 log.trace({
                     error: err,
@@ -93,6 +99,7 @@ function findUser(db, username, password) {
 
     return new Promise((resolve, reject) => {
         const collection = db.collection('users');
+        let sha512 = crypto.createHash('sha512');
 
         collection.find({username: username}).limit(1).next((err, doc) => {
             if (err) {
@@ -108,7 +115,9 @@ function findUser(db, username, password) {
                 });
             } else {
                 if (doc) {
-                    if(doc.hasOwnProperty('password') && doc.password === password){
+                    if (doc.hasOwnProperty('password') && doc.hasOwnProperty('salt') &&
+                        doc.password === sha512.update(doc.salt + password, 'utf8').digest('hex')) {
+
                         log.trace({username: username}, 'Username/password combination found, resolving from users.findUser');
                         resolve({
                             user: {
@@ -193,7 +202,7 @@ module.exports = {
                         }
                     });
                 } else {
-                    findUser(db, username, password).then((user) =>{
+                    findUser(db, username, password).then((user) => {
                         db.close();
 
                         log.trace({username: username}, 'Username/password combination found, resolving from users.loginUser');
