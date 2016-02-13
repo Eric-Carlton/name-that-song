@@ -4,12 +4,13 @@ const restify = require('restify');
 const appProperties = require('./config/appProperties');
 const gameController = require('./controllers/gameController');
 const playlist = require('./utils/playlist');
+const users = require('./utils/users');
 
 const log = bunyan.createLogger({
     name: 'name-that-song',
     streams: [
         {
-            level: 'trace',
+            level: appProperties.stdErrLvl,
             stream: process.stdout
         },
         {
@@ -38,6 +39,51 @@ server.use(
 server.use(restify.acceptParser(server.acceptable));
 server.use(restify.queryParser());
 server.use(restify.bodyParser());
+
+server.post('/name-that-song/user/create', (req, res, next) => {
+    log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/create');
+
+    if (req.params['username']) {
+        if (req.params['password']) {
+            users.createUser(req.params['username'], req.params['password']).then( () =>  {
+                log.debug('Sending 200 from /user/create');
+
+                res.send(200);
+                return next();
+            }, (err) => {
+                log.debug({response: err}, 'Sending response from /user/create');
+
+                res.send(500, err);
+                return next();
+            });
+        } else {
+            const response = {
+                error: {
+                    code: 1005,
+                    message: appProperties.errorMessages['1005']
+                }
+            };
+
+            log.debug({response: response}, 'Sending response from /user/create');
+
+            res.send(500, response);
+            return next();
+        }
+
+    } else {
+        const response = {
+            error: {
+                code: 1004,
+                message: appProperties.errorMessages['1004']
+            }
+        };
+
+        log.debug({response: response}, 'Sending response from /user/create');
+
+        res.send(500, response);
+        return next();
+    }
+});
 
 server.get('/name-that-song/playlist/generate/:artist', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /playlist/generate/:artist');

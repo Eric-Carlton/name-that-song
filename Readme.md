@@ -61,6 +61,15 @@ Installing
         echonestApiKey: '<your_api_key>'
     };
     ```
+
+5. [Download](https://www.mongodb.org/downloads#production) and [install](https://docs.mongodb.org/manual/tutorial/) MongoDB
+   * Create a database to store the data for this application.
+   * Remember that privateProperties.js files from step 4?  It's time to add a new property to it
+   
+   ```
+   mongoUrl: 'mongodb://<url_of_mongo_server>/<database_name>'
+   ```
+   * Make sure mongod is running when you start the application! Otherwise, you're going to be seeing database errors everywhere.
    
 Building/Running Web App
 ------------------------

@@ -5,12 +5,13 @@
 
 const playlist = require('../utils/playlist');
 const bunyan = require('bunyan');
+const appProperties = require('../config/appProperties');
 
 const log = bunyan.createLogger({
     name: 'name-that-song',
     streams: [
         {
-            level: 'trace',
+            level: appProperties.stdErrLvl,
             stream: process.stdout
         },
         {

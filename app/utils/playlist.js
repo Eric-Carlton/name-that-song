@@ -12,7 +12,7 @@ const log = bunyan.createLogger({
     name: 'name-that-song',
     streams: [
         {
-            level: 'trace',
+            level: appProperties.stdErrLvl,
             stream: process.stdout
         },
         {
