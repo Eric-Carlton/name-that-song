@@ -13,8 +13,10 @@ module.exports = {
         1003: 'Unable to find preview track for song.  Please request a new song.',
         1004: 'No username in request',
         1005: 'No password in request',
-        1006: 'Database error while creating user',
-        1007: 'Username already registered'
+        1006: 'Database error',
+        1007: 'Username already registered',
+        1008: 'Username does not exist',
+        1009: 'Password incorrect'
     },
     stdErrLvl: 'trace'
 };

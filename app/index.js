@@ -85,6 +85,51 @@ server.post('/name-that-song/user/create', (req, res, next) => {
     }
 });
 
+server.post('/name-that-song/user/login', (req, res, next) =>{
+    log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/login');
+
+    if (req.params['username']) {
+        if (req.params['password']) {
+            users.loginUser(req.params['username'], req.params['password']).then( (user) =>  {
+                log.debug({response: user}, 'Sending response from /user/login');
+
+                res.send(200, user);
+                return next();
+            }, (err) => {
+                log.debug({response: err}, 'Sending response from /user/login');
+
+                res.send(500, err);
+                return next();
+            });
+        } else {
+            const response = {
+                error: {
+                    code: 1005,
+                    message: appProperties.errorMessages['1005']
+                }
+            };
+
+            log.debug({response: response}, 'Sending response from /user/login');
+
+            res.send(500, response);
+            return next();
+        }
+
+    } else {
+        const response = {
+            error: {
+                code: 1004,
+                message: appProperties.errorMessages['1004']
+            }
+        };
+
+        log.debug({response: response}, 'Sending response from /user/login');
+
+        res.send(500, response);
+        return next();
+    }
+});
+
 server.get('/name-that-song/playlist/generate/:artist', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /playlist/generate/:artist');
 
