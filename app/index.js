@@ -111,7 +111,7 @@ server.post('/name-that-song/user/login', (req, res, next) =>{
 
             log.debug({response: response}, 'Sending response from /user/login');
 
-            res.send(500, response);
+            res.send(400, response);
             return next();
         }
 
@@ -125,7 +125,7 @@ server.post('/name-that-song/user/login', (req, res, next) =>{
 
         log.debug({response: response}, 'Sending response from /user/login');
 
-        res.send(500, response);
+        res.send(400, response);
         return next();
     }
 });
@@ -144,6 +144,36 @@ server.get('/name-that-song/user/available/:username', (req, res, next) => {
         res.send(500, err);
         return next();
     });
+});
+
+server.post('/name-that-song/user/password/reset', (req, res, next) => {
+    log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/password/reset');
+
+    if(req.params['identifier']){
+        users.resetPassword(req.params['identifier']).then(() =>{
+            log.debug({response: 200}, 'Sending response from /user/password/reset');
+
+            res.send(204);
+            return next();
+        }, (err) => {
+            log.debug({response: err}, 'Sending response from /user/password/reset');
+
+            res.send(500, err);
+            return next();
+        });
+    } else {
+        const response = {
+            error: {
+                code: 1012,
+                message: appProperties.errorMessages['1012']
+            }
+        };
+
+        log.debug({response: response}, 'Sending response from /user/password/reset');
+
+        res.send(400, response);
+        return next();
+    }
 });
 
 server.get('/name-that-song/playlist/generate/:artist', (req, res, next) => {

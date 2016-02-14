@@ -9,7 +9,7 @@
 
     function encryptPassword(username, password) {
         let sha512 = crypto.createHash('sha512');
-        return sha512.update('nameThatSong' + username + password, 'utf8').digest('hex');
+        return sha512.update('nameThatSong' + username.toUpperCase() + password, 'utf8').digest('hex');
     }
 
     angular.module('nameThatSong.user', []).service('UserService', ['$http', function ($http) {
