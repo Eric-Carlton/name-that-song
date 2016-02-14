@@ -45,10 +45,10 @@ server.post('/name-that-song/user/create', (req, res, next) => {
 
     if (req.params['username']) {
         if (req.params['password']) {
-            users.createUser(req.params['username'], req.params['password']).then( () =>  {
+            users.createUser(req.params['username'], req.params['password'], req.params['email']).then( () =>  {
                 log.debug('Sending 200 from /user/create');
 
-                res.send(200);
+                res.send(201);
                 return next();
             }, (err) => {
                 log.debug({response: err}, 'Sending response from /user/create');
@@ -128,6 +128,22 @@ server.post('/name-that-song/user/login', (req, res, next) =>{
         res.send(500, response);
         return next();
     }
+});
+
+server.get('/name-that-song/user/available/:username', (req, res, next) => {
+    log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/:name/available');
+
+    users.checkUsernameAvailable(req.params['username']).then(() => {
+        log.debug({response: 200}, 'Sending response from /user/:name/available');
+
+        res.send(204);
+        return next();
+    }, (err) => {
+        log.debug({response: err}, 'Sending response from /user/:name/available');
+
+        res.send(500, err);
+        return next();
+    });
 });
 
 server.get('/name-that-song/playlist/generate/:artist', (req, res, next) => {

@@ -4,5 +4,7 @@
     "randomSongRoute": "/song/random",
     "guessSongRoute": "/song/guess",
     "loginRoute": "/user/login",
+    "usernameAvailableRoute": "/user/available/",
+    "registerRoute": "/user/create",
     "timeout": 3000
 }

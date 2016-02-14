@@ -1,0 +1,32 @@
+<form class="col-md-4 col-md-offset-4">
+    <div class="input-group">
+        <span class="input-group-addon">
+            <img src="images/check.png" alt="Username Available" height="20" width="20"
+                 ng-show="registerUsername.length > 0 && usernameAvailable">
+            <img src="images/x.png" alt="Username Taken" height="20" width="20"
+                 ng-show="registerUsername.length > 0 && !usernameAvailable">
+            {{registerUsernameLblTxt}}
+        </span>
+        <input class="form-control" type="text" ng-model="registerUsername"/>
+    </div>
+    <div class="input-group">
+        <span class="input-group-addon">{{registerPasswordLblTxt}}</span>
+        <input class="form-control" type="password" ng-model="registerPassword"/>
+    </div>
+    <div class="input-group">
+        <span class="input-group-addon">{{confirmPasswordLblTxt}}</span>
+        <input class="form-control" type="password" ng-model="confirmRegisterPassword"/>
+    </div>
+    <div class="input-group">
+        <span class="input-group-addon">{{registerEmailLblTxt}}
+            <img data-tooltip="Your email address will only be used<br />to reset your password if you forget it.<br />We won't give it to anyone, we swear!"
+                 src="images/questionMark.png" alt="Question Mark" height="20" width="20">
+        </span>
+        <input class="form-control" type="text" ng-model="registerEmail"/>
+    </div>
+    <button class="btn-block btn-primary" ng-click="register()" type="button"
+            ng-disabled="registerPassword.length <= 0 && registerPassword != confirmRegisterPassword && !usernameAvailable && loading">
+        {{registerBtnTxt}}
+    </button>
+    <div id="error" class="alert alert-danger" role="alert" ng-show="error">{{errorMessage}}</div>
+</form>

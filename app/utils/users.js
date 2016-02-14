@@ -26,7 +26,7 @@ const log = bunyan.createLogger({
     ]
 });
 
-function insertUser(db, username, password) {
+function insertUser(db, username, password, email) {
     log.trace({username: username}, 'Entered users.insertUser');
 
     const salt = new Date().getTime() + crypto.randomBytes(256).toString('hex');
@@ -37,7 +37,7 @@ function insertUser(db, username, password) {
     return new Promise((resolve, reject) => {
         const collection = db.collection('users');
 
-        collection.insertOne({username: username, password: password, salt: salt}, (err, result) => {
+        collection.insertOne({username: username.toUpperCase(), password: password, email: email, salt: salt}, (err, result) => {
             if (err) {
                 log.trace({
                     error: err,
@@ -66,7 +66,7 @@ function isUsernameUnique(db, username) {
     return new Promise((resolve, reject) => {
         const collection = db.collection('users');
 
-        collection.find({username: username}).toArray((err, docs) => {
+        collection.find({username: username.toUpperCase()}).toArray((err, docs) => {
             if (err) {
                 log.trace({
                     error: err,
@@ -101,7 +101,7 @@ function findUser(db, username, password) {
         const collection = db.collection('users');
         let sha512 = crypto.createHash('sha512');
 
-        collection.find({username: username}).limit(1).next((err, doc) => {
+        collection.find({username: username.toUpperCase()}).limit(1).next((err, doc) => {
             if (err) {
                 log.trace({
                     error: err,
@@ -150,7 +150,7 @@ function findUser(db, username, password) {
 
 module.exports = {
 
-    createUser: (username, password) => {
+    createUser: (username, password, email) => {
         log.trace({username: username}, 'Entered users.createUser');
 
         return new Promise((resolve, reject) => {
@@ -165,7 +165,7 @@ module.exports = {
                     });
                 } else {
                     isUsernameUnique(db, username).then(() => {
-                        insertUser(db, username, password).then((result) => {
+                        insertUser(db, username, password, email).then((result) => {
                             db.close();
                             log.trace({
                                 username: username,
@@ -183,6 +183,34 @@ module.exports = {
                     }, (err) => {
                         db.close();
                         log.trace({username: username}, 'Username already registered, rejecting from users.createUser');
+                        reject(err);
+                    });
+                }
+            });
+        });
+    },
+
+    checkUsernameAvailable: (username) => {
+        return new Promise((resolve, reject) => {
+            mongo.connect(privateProperties.mongoUrl, (err, db) => {
+                if (err) {
+                    log.error({error: err}, 'Error with db connection, rejecting from users.checkUsernameAvailable');
+                    reject({
+                        error: {
+                            code: 1006,
+                            message: appProperties.errorMessages['1006']
+                        }
+                    });
+                } else {
+                    isUsernameUnique(db, username).then(() => {
+                        db.close();
+
+                        log.trace({username: username}, 'Username available, resolving from users.checkUsernameAvailable');
+                        resolve();
+                    }, (err) => {
+                        db.close();
+
+                        log.trace({username: username}, 'Username not available, rejecting from users.checkUsernameAvailable');
                         reject(err);
                     });
                 }

@@ -15,7 +15,8 @@
     "bunyan": "^1.5.1",
     "crypto-browserify": "^3.11.0",
     "mongodb": "^2.1.7",
-    "restify": "^4.0.3"
+    "restify": "^4.0.3",
+    "tooltip": "^1.6.0"
   },
   "devDependencies": {
     "angular-router-browserify": "0.0.2",
