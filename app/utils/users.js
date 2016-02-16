@@ -39,29 +39,126 @@ function insertUser(db, username, password, email) {
         const collection = db.collection('users');
 
         collection.insertOne({
-            username: username.toUpperCase(),
+            username: username.toLowerCase(),
             password: password,
-            email: email.toUpperCase(),
+            email: email.toLowerCase(),
             salt: salt
-        }, (err, result) => {
-            if (err) {
-                log.trace({
-                    error: err,
-                    username: username
-                }, 'Error while creating user, rejecting from users.insertUser');
-                reject({
-                    error: {
-                        code: 1006,
-                        message: appProperties.errorMessages['1006']
-                    }
-                });
+        }).then((result) => {
+            log.trace({
+                username: username,
+                result: result
+            }, 'Created user successfully, resolving from users.insertUser');
+            resolve(result);
+        }, (err) => {
+            log.error({
+                error: err,
+                username: username
+            }, 'Error while creating user, rejecting from users.insertUser');
+            reject({
+                error: {
+                    code: 1006,
+                    message: appProperties.errorMessages['1006']
+                }
+            });
+        });
+    });
+}
+
+function getUser(db, query) {
+    log.trace({query: query}, 'Entered users.getUser');
+
+    return new Promise((resolve, reject) => {
+        const collection = db.collection('users');
+
+        collection.find(query).limit(1).next().then((doc) => {
+            log.trace({user: doc}, 'User found, resolving from users.getUser');
+            resolve(doc);
+        }, (err) => {
+            log.error({
+                error: err,
+                query: query
+            }, 'Error while searching for user, rejecting from users.getUser');
+            reject({
+                error: {
+                    code: 1006,
+                    message: appProperties.errorMessages['1006']
+                }
+            });
+        });
+    });
+}
+
+function getUserByUsername(db, username) {
+    log.trace({username: username}, 'Entered users.getUserByUsername');
+
+    return new Promise((resolve, reject) => {
+        getUser(db, {username: username.toLowerCase()}).then((user) => {
+            log.trace({user: user}, 'User found, resolving from users.getUserByUsername');
+            resolve(user);
+        }, (err) => {
+            log.trace({
+                error: err,
+                username: username
+            }, 'Error while searching for user by username, rejecting from users.getUserByUsername');
+            reject(err);
+        });
+    });
+}
+
+function getUserByEmail(db, email) {
+    log.trace({email: email}, 'Entered users.getUserByEmail');
+
+    return new Promise((resolve, reject) => {
+        getUser(db, {email: email.toLowerCase()}).then((user) => {
+            log.trace({user: user}, 'User found, resolving from users.getUserByEmail');
+            resolve(user);
+        }, (err) => {
+            log.trace({
+                error: err,
+                email: email
+            }, 'Error while searching for user by email, rejecting from users.getUserByEmail');
+            reject(err);
+        });
+    });
+}
+
+function getUserByUsernameOrEmail(db, identifier) {
+    log.trace({identifier: identifier}, 'Entered users.getUserByUsernameOrEmail');
+
+    return new Promise((resolve, reject) => {
+        getUserByUsername(db, identifier.toLowerCase()).then((user) => {
+            if (user) {
+                log.trace({user: user}, 'User found, resolving from users.getUserByUsernameOrEmail');
+                resolve(user);
             } else {
-                log.trace({
-                    username: username,
-                    result: result
-                }, 'Created user successfully, resolving from users.insertUser');
-                resolve(result);
+                //failed to find user by username, try by email
+                getUserByEmail(db, identifier.toLowerCase()).then((user) => {
+                    if (user) {
+                        log.trace({user: user}, 'User found, resolving from users.getUserByUsernameOrEmail');
+                        resolve(user);
+                    } else {
+                        log.trace({identifier: identifier}, 'User not found, rejecting from users.getUserByUsernameOrEmail');
+                        reject({
+                            error: {
+                                code: 1010,
+                                message: appProperties.errorMessages['1010']
+                            }
+                        });
+                    }
+                }, (err) => {
+                    log.trace({
+                        error: err,
+                        identifier: identifier
+                    }, 'Error while search for user by email, rejecting from users.getUserByUsernameOrEmail');
+                    reject(err);
+                });
             }
+        }, (err) => {
+            log.trace({
+                error: err,
+                identifier: identifier
+            }, 'Error while search for user by username, rejecting from users.getUserByUsernameOrEmail');
+            reject(err);
         });
     });
 }
@@ -70,21 +167,8 @@ function isUsernameUnique(db, username) {
     log.trace({username: username}, 'Entered users.isUsernameUnique');
 
     return new Promise((resolve, reject) => {
-        const collection = db.collection('users');
-
-        collection.find({username: username.toUpperCase()}).toArray((err, docs) => {
-            if (err) {
-                log.trace({
-                    error: err,
-                    username: username
-                }, 'Error while checking username uniqueness, rejecting from users.isUsernameUnique');
-                reject({
-                    error: {
-                        code: 1006,
-                        message: appProperties.errorMessages['1006']
-                    }
-                });
-            } else if (docs.length > 0) {
+        getUserByUsername(db, username).then((user) => {
+            if (user) {
                 log.trace({username: username}, 'Username already registered, rejecting from users.isUsernameUnique');
                 reject({
                     error: {
@@ -96,6 +180,39 @@ function isUsernameUnique(db, username) {
                 log.trace({username: username}, 'Username unique, resolving from users.isUsernameUnique');
                 resolve();
             }
+        }, (err) => {
+            log.trace({
+                error: err,
+                username: username
+            }, 'Error while checking username uniqueness, rejecting from users.isUsernameUnique');
+            reject(err);
+        });
+    });
+}
+
+function isEmailUnique(db, email){
+    log.trace({email: email}, 'Entered users.isEmailUnique');
+
+    return new Promise((resolve, reject) => {
+        getUserByUsernameOrEmail(db, email).then((user) => {
+            if (user) {
+                log.trace({email: email}, 'Email already registered, rejecting from users.isEmailUnique');
+                reject({
+                    error: {
+                        code: 1014,
+                        message: appProperties.errorMessages['1014']
+                    }
+                });
+            } else {
+                log.trace({email: email}, 'Email unique, resolving from users.isEmailUnique');
+                resolve();
+            }
+        }, (err) => {
+            log.trace({
+                error: err,
+                email: email
+            }, 'Error while checking email uniqueness, rejecting from users.isEmailUnique');
+            reject(err);
         });
     });
 }
@@ -104,105 +221,65 @@ function verifyLogin(db, username, password) {
     log.trace({username: username}, 'Entered users.verifyLogin');
 
     return new Promise((resolve, reject) => {
-        const collection = db.collection('users');
-        let sha512 = crypto.createHash('sha512');
+        getUserByUsername(db, username).then((user) => {
+            if (user) {
+                let sha512 = crypto.createHash('sha512');
+                if (user.hasOwnProperty('password') && user.hasOwnProperty('salt') &&
+                    user.password === sha512.update(user.salt + password, 'utf8').digest('hex')) {
 
-        collection.find({username: username.toUpperCase()}).limit(1).next((err, doc) => {
-            if (err) {
-                log.trace({
-                    error: err,
-                    username: username
-                }, 'Error while logging user in, rejecting from users.verifyLogin');
-                reject({
-                    error: {
-                        code: 1006,
-                        message: appProperties.errorMessages['1006']
-                    }
-                });
-            } else {
-                if (doc) {
-                    if (doc.hasOwnProperty('password') && doc.hasOwnProperty('salt') &&
-                        doc.password === sha512.update(doc.salt + password, 'utf8').digest('hex')) {
-
-                        log.trace({username: username}, 'Username/password combination found, resolving from users.verifyLogin');
-                        resolve({
-                            user: {
-                                id: doc._id
-                            }
-                        });
-                    } else {
-                        log.trace({username: username}, 'Password incorrect for username, rejecting from users.verifyLogin');
-                        reject({
-                            error: {
-                                code: 1009,
-                                message: appProperties.errorMessages['1009']
-                            }
-                        });
-                    }
+                    log.trace({username: username}, 'Username/password combination found, resolving from users.verifyLogin');
+                    resolve({
+                        user: {
+                            id: user._id
+                        }
+                    });
                 } else {
-                    log.trace({username: username}, 'Username not found, rejecting from users.verifyLogin');
+                    log.trace({username: username}, 'Password incorrect for username, rejecting from users.verifyLogin');
                     reject({
                         error: {
-                            code: 1008,
-                            message: appProperties.errorMessages['1008']
+                            code: 1009,
+                            message: appProperties.errorMessages['1009']
                         }
                     });
                 }
+            } else {
+                log.trace({username: username}, 'Username not found, rejecting from users.verifyLogin');
+                reject({
+                    error: {
+                        code: 1008,
+                        message: appProperties.errorMessages['1008']
+                    }
+                });
             }
+        }, (err) => {
+            log.trace({
+                error: err,
+                username: username
+            }, 'Error while logging user in, rejecting from users.verifyLogin');
+            reject(err);
         });
     });
 }
 
-function findUser(db, identifier) {
-    log.trace({identifier: identifier}, 'Entered users.findUser');
+function generatePasswordForUsername(username) {
+    log.trace({username: username},'Entered users.generatePasswordForUsername');
 
-    return new Promise((resolve, reject) => {
-        const collection = db.collection('users');
+    let sha512 = crypto.createHash('sha512');
 
-        collection.find({username: identifier.toUpperCase()}).limit(1).next((err, doc) => {
-            if (err) {
-                log.trace({
-                    error: err,
-                    identifier: identifier
-                }, 'Error while search for user by username, rejecting from users.findUser');
-                reject({
-                    error: {
-                        code: 1006,
-                        message: appProperties.errorMessages['1006']
-                    }
-                });
-            } else if (doc) {
-                log.trace({user: doc}, 'User found, resolving from users.findUser');
-                resolve(doc);
-            } else {
-                collection.find({email: identifier.toUpperCase()}).limit(1).next((err, doc) => {
-                    if (err) {
-                        log.trace({
-                            error: err,
-                            identifier: identifier
-                        }, 'Error while search for user by email, rejecting from users.findUser');
-                        reject({
-                            error: {
-                                code: 1006,
-                                message: appProperties.errorMessages['1006']
-                            }
-                        });
-                    } else if (doc) {
-                        log.trace({user: doc}, 'User found, resolving from users.findUser');
-                        resolve(doc);
-                    } else {
-                        log.trace({identifier: identifier}, 'User not found, rejecting from users.findUser');
-                        reject({
-                            error: {
-                                code: 1010,
-                                message: appProperties.errorMessages['1010']
-                            }
-                        });
-                    }
-                });
-            }
-        });
-    });
+    const plainTextPassword = crypto.randomBytes(8).toString('hex');
+
+    let password = sha512.update('nameThatSong' + username + plainTextPassword, 'utf8').digest('hex');
+    const salt = new Date().getTime() + crypto.randomBytes(256).toString('hex');
+
+
+    sha512 = crypto.createHash('sha512');
+    password = sha512.update(salt + password, 'utf8').digest('hex');
+
+    return {
+        salt: salt,
+        hash: password,
+        plainTextPassword: plainTextPassword
+    };
 }
 
 function resetUserPassword(db, user) {
@@ -211,26 +288,27 @@ function resetUserPassword(db, user) {
     return new Promise((resolve, reject) => {
         if (user.email && user.email.length > 0) {
             const collection = db.collection('users');
-
-            let sha512 = crypto.createHash('sha512');
-
-            const plainTextPassword = crypto.randomBytes(8).toString('hex');
-
-            const password = sha512.update('nameThatSong' + user.username.toUpperCase() + plainTextPassword, 'utf8').digest('hex');
-            const salt = new Date().getTime() + crypto.randomBytes(256).toString('hex');
-
-
-            sha512 = crypto.createHash('sha512');
+            const password = generatePasswordForUsername(user.username);
 
             collection.updateOne({_id: user._id}, {
                 $set: {
-                    password: sha512.update(salt + password, 'utf8').digest('hex'),
-                    salt: salt
+                    password: password.hash,
+                    salt: password.salt
                 }
+            }).then(() => {
+                resolve({user: user, password: password.plainTextPassword});
+            }, (err) => {
+                log.error({
+                    error: err,
+                    user: user
+                }, 'Error while updating password, rejecting from users.resetUserPassword');
+                reject({
+                    error: {
+                        code: 1006,
+                        message: appProperties.errorMessages['1006']
+                    }
+                });
             });
-
-            log.trace({user: user}, 'User updated, resolving from users.resetUserPassword');
-            resolve({user: user, password: plainTextPassword});
         } else {
             log.trace({user: user}, 'User has no email address, rejecting form users.resetUserPassword');
             reject({
@@ -240,12 +318,11 @@ function resetUserPassword(db, user) {
                 }
             });
         }
-
     });
 }
 
 function rollbackUserPassword(db, user) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         const collection = db.collection('users');
 
         collection.updateOne({_id: user._id}, {
@@ -253,15 +330,26 @@ function rollbackUserPassword(db, user) {
                 password: user.password,
                 salt: user.salt
             }
+        }).then(() => {
+            log.trace({user: user}, 'User updated, resolving from users.rollbackUserPassword');
+            resolve();
+        }, (err) => {
+            log.error({
+                error: err,
+                user: user
+            }, 'Error while updating password, rejecting from users.rollbackUserPassword');
+            reject({
+                error: {
+                    code: 1006,
+                    message: appProperties.errorMessages['1006']
+                }
+            });
         });
-
-        log.trace({user: user}, 'User updated, resolving from users.rollbackUserPassword');
-        resolve();
     });
 }
 
 function emailUserNewPassword(username, email, password) {
-    log.info({email: email});
+    log.trace({email: email, username:username}, 'Entering users.emailUserNewPassword');
     const transporter = nodemailer.createTransport({
         service: privateProperties.emailService,
         auth: {
@@ -283,22 +371,20 @@ function emailUserNewPassword(username, email, password) {
     };
 
     return new Promise((resolve, reject) => {
-        transporter.sendMail(mailOptions, function (error, info) {
-            if (error) {
-                log.trace({
-                    error: error,
-                    email: mailOptions.to
-                }, 'Unable to send email, rejecting from users.emailUseNewPassword');
-                reject({
-                    error: {
-                        code: 1011,
-                        message: appProperties.errorMessages['1011']
-                    }
-                });
-            } else {
-                log.trace({result: info, email: email}, 'Email sent, resolving from users.emailUseNewPassword');
-                resolve();
-            }
+        transporter.sendMail(mailOptions).then((info) => {
+            log.trace({result: info, email: email}, 'Email sent, resolving from users.emailUseNewPassword');
+            resolve();
+        }, (err) => {
+            log.error({
+                error: err,
+                email: mailOptions.to
+            }, 'Unable to send email, rejecting from users.emailUseNewPassword');
+            reject({
+                error: {
+                    code: 1011,
+                    message: appProperties.errorMessages['1011']
+                }
+            });
         });
     });
 }
@@ -320,23 +406,53 @@ module.exports = {
                     });
                 } else {
                     isUsernameUnique(db, username).then(() => {
-                        insertUser(db, username, password, email).then((result) => {
-                            db.close();
-                            log.trace({
-                                username: username,
-                                result: result
-                            }, 'Created user successfully, resolving from users.createUser');
-                            resolve(result);
-                        }, (err) => {
-                            db.close();
-                            log.trace({
-                                error: err,
-                                username: username
-                            }, 'Error while creating user, rejecting from users.createUser');
-                            reject(err);
-                        });
+                        if(email && email.length > 0){
+                            isEmailUnique(db, email).then(() => {
+                                insertUser(db, username, password, email).then((result) => {
+                                    db.close();
+
+                                    log.trace({
+                                        username: username,
+                                        result: result
+                                    }, 'Created user successfully, resolving from users.createUser');
+                                    resolve(result);
+                                }, (err) => {
+                                    db.close();
+
+                                    log.trace({
+                                        error: err,
+                                        username: username
+                                    }, 'Error while creating user, rejecting from users.createUser');
+                                    reject(err);
+                                });
+                            }, (err) => {
+                                db.close();
+
+                                log.trace({username: username}, 'Email already registered, rejecting from users.createUser');
+                                reject(err);
+                            });
+                        } else {
+                            insertUser(db, username, password, email).then((result) => {
+                                db.close();
+
+                                log.trace({
+                                    username: username,
+                                    result: result
+                                }, 'Created user successfully, resolving from users.createUser');
+                                resolve(result);
+                            }, (err) => {
+                                db.close();
+
+                                log.trace({
+                                    error: err,
+                                    username: username
+                                }, 'Error while creating user, rejecting from users.createUser');
+                                reject(err);
+                            });
+                        }
                     }, (err) => {
                         db.close();
+
                         log.trace({username: username}, 'Username already registered, rejecting from users.createUser');
                         reject(err);
                     });
@@ -413,22 +529,30 @@ module.exports = {
                         }
                     });
                 } else {
-                    findUser(db, identifier).then((user) => {
+                    getUserByUsernameOrEmail(db, identifier).then((user) => {
                         resetUserPassword(db, user).then((result) => {
                             emailUserNewPassword(result.user.username, result.user.email, result.password).then(() => {
+                                db.close();
+
                                 log.trace({username: result.user.username}, 'Email sent, resolving from users.resetPassword');
                                 resolve();
                             }, (err) => {
                                 log.trace({username: result.user.username}, 'Email not sent, attempting to rollback password');
                                 rollbackUserPassword(db, user).then(() => {
+                                    db.close();
+
                                     err.error.message += '. Password reset has been undone';
                                     reject(err);
                                 }, () => {
+                                    db.close();
+
                                     err.error.message += '. Password reset could not be undone';
                                     reject(err);
                                 });
                             });
                         }, (err) => {
+                            db.close();
+
                             log.trace({
                                 error: err,
                                 user: user
@@ -436,6 +560,8 @@ module.exports = {
                             reject(err);
                         });
                     }, (err) => {
+                        db.close();
+
                         log.trace({identifier: identifier}, 'User not found, rejecting from users.resetPassword');
                         reject(err);
                     });

@@ -32,7 +32,7 @@
             $scope.registerEmail = '';
 
             $scope.$watch('registerUsername', (newVal) => {
-                newVal = $scope.registerUsername;
+                $scope.reisterUsername = newVal;
 
                 UserService.isUsernameAvailable(newVal).then(() => {
                     $scope.usernameAvailable = true;
@@ -62,6 +62,7 @@
                     $scope.errorMessage = 'Passwords do not match';
                 } else {
                     $scope.loading = true;
+                    $scope.registerBtnTxt = loadingBtnTxt;
 
                     UserService.registerUser($scope.registerUsername, $scope.registerPassword, $scope.registerEmail).then(() => {
                         $scope.loading = false;
@@ -74,7 +75,7 @@
                     }, (err) => {
                         $scope.loading = false;
 
-                        $scope.registerBtnTxt = loadingBtnTxt;
+                        $scope.registerBtnTxt = registerBtnTxt;
 
                         $scope.error = true;
                         $scope.errorMessage = err.message;

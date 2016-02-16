@@ -9,7 +9,7 @@
 
     function encryptPassword(username, password) {
         let sha512 = crypto.createHash('sha512');
-        return sha512.update('nameThatSong' + username.toUpperCase() + password, 'utf8').digest('hex');
+        return sha512.update('nameThatSong' + username.toLowerCase() + password, 'utf8').digest('hex');
     }
 
     angular.module('nameThatSong.user', []).service('UserService', ['$http', function ($http) {
@@ -22,7 +22,7 @@
             return new Promise((resolve, reject) => {
                 $http({
                     method: 'POST',
-                    data: {username: username.toUpperCase(), password: password},
+                    data: {username: username, password: password},
                     url: serviceProperties.host + serviceProperties.loginRoute,
                     timeout: serviceProperties.timeout
                 }).then((res) => {
@@ -47,7 +47,7 @@
             return new Promise((resolve, reject) => {
                 $http({
                     method: 'GET',
-                    url: serviceProperties.host + serviceProperties.usernameAvailableRoute + username.toUpperCase(),
+                    url: serviceProperties.host + serviceProperties.usernameAvailableRoute + username,
                     timeout: serviceProperties.timeout
                 }).then(() => {
                     resolve();
@@ -71,7 +71,7 @@
             return new Promise((resolve, reject) => {
                 $http({
                     method: 'POST',
-                    data: {username: username.toUpperCase(), password: password, email: email},
+                    data: {username: username, password: password, email: email},
                     url: serviceProperties.host + serviceProperties.registerRoute,
                     timeout: serviceProperties.timeout
                 }).then(() => {

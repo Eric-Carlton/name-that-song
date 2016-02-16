@@ -20,7 +20,8 @@ module.exports = {
         1010: 'No account found for that username or email',
         1011: 'Error sending email',
         1012: 'Identifier required to reset password',
-        1013: 'Unable to reset password because user has no associated email address'
+        1013: 'Unable to reset password because user has no associated email address',
+        1014: 'Account with email address already registered'
     },
     stdErrLvl: 'trace'
 };

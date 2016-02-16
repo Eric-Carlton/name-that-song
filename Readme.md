@@ -71,6 +71,18 @@ Installing
    ```
    * Make sure mongod is running when you start the application! Otherwise, you're going to be seeing database errors everywhere.
    
+6. Add properties for sending emails
+   * This app includes functionality to send an email to a user with a new password if the user forgets his/her password. You will need to add credentials to an email account that you own for this to work.
+   * *Note about Gmail accounts*: If you would like to send emails from a Gmail account, you'll need to [allow the account to be accessed by less secure apps](https://www.google.com/settings/security/lesssecureapps). 
+   
+   * Add the following properties to the privateProperties.js file:
+   
+   ```
+   emailService: <email_service_to_use>,
+   emailUsername: <username_of_email_account_to_use>,
+   emailPassword: <password_to_email_account>
+   ```
+   
 Building/Running Web App
 ------------------------
 Navigate to &lt;project_root&gt;/webapp and use a terminal to run
