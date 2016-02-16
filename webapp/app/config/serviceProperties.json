@@ -6,5 +6,6 @@
     "loginRoute": "/user/login",
     "usernameAvailableRoute": "/user/available/",
     "registerRoute": "/user/create",
-    "timeout": 3000
+    "resetPasswordRoute": "/user/password/reset",
+    "timeout": 10000
 }
