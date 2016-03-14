@@ -137,13 +137,8 @@ function getUserByUsernameOrEmail(db, identifier) {
                         log.trace({user: user}, 'User found, resolving from users.getUserByUsernameOrEmail');
                         resolve(user);
                     } else {
-                        log.trace({identifier: identifier}, 'User not found, rejecting from users.getUserByUsernameOrEmail');
-                        reject({
-                            error: {
-                                code: 1010,
-                                message: appProperties.errorMessages['1010']
-                            }
-                        });
+                        log.trace({identifier: identifier}, 'User not found, resolving from users.getUserByUsernameOrEmail');
+                        resolve();
                     }
                 }, (err) => {
                     log.trace({
