@@ -222,12 +222,12 @@ function verifyLogin(db, username, password) {
                 if (user.hasOwnProperty('password') && user.hasOwnProperty('salt') &&
                     user.password === sha512.update(user.salt + password, 'utf8').digest('hex')) {
 
+                    //want to return the entire user except the password and salt
+                    delete user.password;
+                    delete user.salt;
+
                     log.trace({username: username}, 'Username/password combination found, resolving from users.verifyLogin');
-                    resolve({
-                        user: {
-                            id: user._id
-                        }
-                    });
+                    resolve({user: user});
                 } else {
                     log.trace({username: username}, 'Password incorrect for username, rejecting from users.verifyLogin');
                     reject({
