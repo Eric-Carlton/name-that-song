@@ -30,7 +30,7 @@ const log = bunyan.createLogger({
 function insertUser(db, username, password, email) {
     log.trace({username: username}, 'Entered users.insertUser');
 
-    const salt = new Date().getTime() + crypto.randomBytes(256).toString('hex');
+    const salt = new Date().getTime() + crypto.randomBytes(8).toString('hex');
     let sha512 = crypto.createHash('sha512');
 
     password = sha512.update(salt + password, 'utf8').digest('hex');
@@ -269,7 +269,7 @@ function generatePasswordForUsername(username) {
     const plainTextPassword = crypto.randomBytes(8).toString('hex');
 
     let password = sha512.update('nameThatSong' + username + plainTextPassword, 'utf8').digest('hex');
-    const salt = new Date().getTime() + crypto.randomBytes(256).toString('hex');
+    const salt = new Date().getTime() + crypto.randomBytes(8).toString('hex');
 
 
     sha512 = crypto.createHash('sha512');
