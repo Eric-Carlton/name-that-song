@@ -68,7 +68,11 @@ function getUser(db, query) {
         const collection = db.collection('users');
 
         collection.find(query).limit(1).next().then((doc) => {
-            log.trace({username: doc.username}, 'User found, resolving from users.getUser');
+            if(doc){
+                log.trace({username: doc.username}, 'User found, resolving from users.getUser');
+            } else {
+                log.trace({username: query.username}, 'User not found, resolving from users.getUser with null');
+            }
             resolve(doc);
         }, (err) => {
             log.error({
@@ -90,7 +94,12 @@ function getUserByUsername(db, username) {
 
     return new Promise((resolve, reject) => {
         getUser(db, {username: username.toLowerCase()}).then((user) => {
-            log.trace({username: user.username}, 'User found, resolving from users.getUserByUsername');
+            if(user){
+                log.trace({username: user.username}, 'User found, resolving from users.getUserByUsername');
+            } else {
+                log.trace({username: username}, 'User not found, resolving from users.getUserByUsername with null');
+            }
+
             resolve(user);
         }, (err) => {
             log.trace({
@@ -107,7 +116,11 @@ function getUserByEmail(db, email) {
 
     return new Promise((resolve, reject) => {
         getUser(db, {email: email.toLowerCase()}).then((user) => {
-            log.trace({username: user.username}, 'User found, resolving from users.getUserByEmail');
+            if(user){
+                log.trace({username: user.username}, 'User found, resolving from users.getUserByEmail');
+            } else {
+                log.trace({email: email}, 'User not found, resolving from users.getUserByEmail with null');
+            }
             resolve(user);
         }, (err) => {
             log.trace({
@@ -132,16 +145,10 @@ function getUserByUsernameOrEmail(db, identifier) {
                 getUserByEmail(db, identifier.toLowerCase()).then((user) => {
                     if (user) {
                         log.trace({username: user.username}, 'User found, resolving from users.getUserByUsernameOrEmail');
-                        resolve(user);
                     } else {
-                        log.trace({identifier: identifier}, 'User not found, rejecting from users.getUserByUsernameOrEmail');
-                        reject({
-                            error: {
-                                code: 1010,
-                                message: appProperties.errorMessages['1010']
-                            }
-                        });
+                        log.trace({identifier: identifier}, 'User not found, resolving from users.getUserByUsernameOrEmail with null');
                     }
+                    resolve(user);
                 }, (err) => {
                     log.trace({
                         error: err,
@@ -537,35 +544,45 @@ module.exports = {
                     });
                 } else {
                     getUserByUsernameOrEmail(db, identifier).then((user) => {
-                        resetUserPassword(db, user).then((result) => {
-                            emailUserNewPassword(result.user.username, result.user.email, result.password).then(() => {
+                        if(user){
+                            resetUserPassword(db, user).then((result) => {
+                                emailUserNewPassword(result.user.username, result.user.email, result.password).then(() => {
+                                    db.close();
+
+                                    log.trace({username: result.user.username}, 'Email sent, resolving from users.resetPassword');
+                                    resolve();
+                                }, (err) => {
+                                    log.trace({username: result.user.username}, 'Email not sent, attempting to rollback password');
+                                    rollbackUserPassword(db, user).then(() => {
+                                        db.close();
+
+                                        err.error.message += '. Password reset has been undone';
+                                        reject(err);
+                                    }, () => {
+                                        db.close();
+
+                                        err.error.message += '. Password reset could not be undone';
+                                        reject(err);
+                                    });
+                                });
+                            }, (err) => {
                                 db.close();
 
-                                log.trace({username: result.user.username}, 'Email sent, resolving from users.resetPassword');
-                                resolve();
-                            }, (err) => {
-                                log.trace({username: result.user.username}, 'Email not sent, attempting to rollback password');
-                                rollbackUserPassword(db, user).then(() => {
-                                    db.close();
-
-                                    err.error.message += '. Password reset has been undone';
-                                    reject(err);
-                                }, () => {
-                                    db.close();
-
-                                    err.error.message += '. Password reset could not be undone';
-                                    reject(err);
-                                });
+                                log.trace({
+                                    error: err,
+                                    user: user
+                                }, 'Error while updating user, rejecting from users.resetPassword');
+                                reject(err);
                             });
-                        }, (err) => {
-                            db.close();
+                        } else {
+                            reject({
+                                error: {
+                                    code: 1010,
+                                    message: appProperties.errorMessages['1010']
+                                }
+                            });
+                        }
 
-                            log.trace({
-                                error: err,
-                                user: user
-                            }, 'Error while updating user, rejecting from users.resetPassword');
-                            reject(err);
-                        });
                     }, (err) => {
                         db.close();
 

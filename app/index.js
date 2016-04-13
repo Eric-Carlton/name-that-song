@@ -134,12 +134,12 @@ server.get('/name-that-song/user/available/:username', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/:name/available');
 
     users.checkUsernameAvailable(req.params['username']).then(() => {
-        log.debug({response: 204}, 'Sending response from /user/:name/available');
+        log.debug({response: 204}, 'Sending response from /user/available/:name');
 
         res.send(204);
         return next();
     }, (err) => {
-        log.debug({response: err}, 'Sending response from /user/:name/available');
+        log.debug({response: err}, 'Sending response from /user/available/:name');
 
         res.send(500, err);
         return next();
