@@ -27,22 +27,19 @@ const log = bunyan.createLogger({
     ]
 });
 
-function insertUser(db, username, password, email) {
+function insertUser(db, username, plainTextPassword, email) {
     log.trace({username: username}, 'Entered users.insertUser');
 
-    const salt = new Date().getTime() + crypto.randomBytes(8).toString('hex');
-    let sha512 = crypto.createHash('sha512');
-
-    password = sha512.update(salt + password, 'utf8').digest('hex');
+    const password = generatePasswordHashForUsername(username, plainTextPassword);
 
     return new Promise((resolve, reject) => {
         const collection = db.collection('users');
 
         collection.insertOne({
             username: username.toLowerCase(),
-            password: password,
+            password: password.hash,
             email: email.toLowerCase(),
-            salt: salt
+            salt: password.salt
         }).then((result) => {
             log.trace({
                 username: username,
@@ -71,7 +68,7 @@ function getUser(db, query) {
         const collection = db.collection('users');
 
         collection.find(query).limit(1).next().then((doc) => {
-            log.trace({user: doc}, 'User found, resolving from users.getUser');
+            log.trace({username: doc.username}, 'User found, resolving from users.getUser');
             resolve(doc);
         }, (err) => {
             log.error({
@@ -93,7 +90,7 @@ function getUserByUsername(db, username) {
 
     return new Promise((resolve, reject) => {
         getUser(db, {username: username.toLowerCase()}).then((user) => {
-            log.trace({user: user}, 'User found, resolving from users.getUserByUsername');
+            log.trace({username: user.username}, 'User found, resolving from users.getUserByUsername');
             resolve(user);
         }, (err) => {
             log.trace({
@@ -110,7 +107,7 @@ function getUserByEmail(db, email) {
 
     return new Promise((resolve, reject) => {
         getUser(db, {email: email.toLowerCase()}).then((user) => {
-            log.trace({user: user}, 'User found, resolving from users.getUserByEmail');
+            log.trace({username: user.username}, 'User found, resolving from users.getUserByEmail');
             resolve(user);
         }, (err) => {
             log.trace({
@@ -128,23 +125,28 @@ function getUserByUsernameOrEmail(db, identifier) {
     return new Promise((resolve, reject) => {
         getUserByUsername(db, identifier.toLowerCase()).then((user) => {
             if (user) {
-                log.trace({user: user}, 'User found, resolving from users.getUserByUsernameOrEmail');
+                log.trace({username: user.username}, 'User found, resolving from users.getUserByUsernameOrEmail');
                 resolve(user);
             } else {
                 //failed to find user by username, try by email
                 getUserByEmail(db, identifier.toLowerCase()).then((user) => {
                     if (user) {
-                        log.trace({user: user}, 'User found, resolving from users.getUserByUsernameOrEmail');
+                        log.trace({username: user.username}, 'User found, resolving from users.getUserByUsernameOrEmail');
                         resolve(user);
                     } else {
-                        log.trace({identifier: identifier}, 'User not found, resolving from users.getUserByUsernameOrEmail');
-                        resolve();
+                        log.trace({identifier: identifier}, 'User not found, rejecting from users.getUserByUsernameOrEmail');
+                        reject({
+                            error: {
+                                code: 1010,
+                                message: appProperties.errorMessages['1010']
+                            }
+                        });
                     }
                 }, (err) => {
                     log.trace({
                         error: err,
                         identifier: identifier
-                    }, 'Error while search for user by email, rejecting from users.getUserByUsernameOrEmail');
+                    }, 'Error while searching for user by email, rejecting from users.getUserByUsernameOrEmail');
                     reject(err);
                 });
             }
@@ -152,7 +154,7 @@ function getUserByUsernameOrEmail(db, identifier) {
             log.trace({
                 error: err,
                 identifier: identifier
-            }, 'Error while search for user by username, rejecting from users.getUserByUsernameOrEmail');
+            }, 'Error while searching for user by username, rejecting from users.getUserByUsernameOrEmail');
             reject(err);
         });
     });
@@ -185,7 +187,7 @@ function isUsernameUnique(db, username) {
     });
 }
 
-function isEmailUnique(db, email){
+function isEmailUnique(db, email) {
     log.trace({email: email}, 'Entered users.isEmailUnique');
 
     return new Promise((resolve, reject) => {
@@ -218,14 +220,8 @@ function verifyLogin(db, username, password) {
     return new Promise((resolve, reject) => {
         getUserByUsername(db, username).then((user) => {
             if (user) {
-                let sha512 = crypto.createHash('sha512');
                 if (user.hasOwnProperty('password') && user.hasOwnProperty('salt') &&
-                    user.password === sha512.update(user.salt + password, 'utf8').digest('hex')) {
-
-                    //want to return the entire user except the password and salt
-                    delete user.password;
-                    delete user.salt;
-
+                    user.password === crypto.createHash('sha512').update(user.salt + password, 'utf8').digest('hex')) {
                     log.trace({username: username}, 'Username/password combination found, resolving from users.verifyLogin');
                     resolve({user: user});
                 } else {
@@ -256,56 +252,67 @@ function verifyLogin(db, username, password) {
     });
 }
 
-function generatePasswordForUsername(username) {
-    log.trace({username: username},'Entered users.generatePasswordForUsername');
+function generatePasswordHashForUsername(username, password) {
+    log.trace({username: username}, 'Entered users.generatePasswordHashForUsername');
 
-    let sha512 = crypto.createHash('sha512');
-
-    const plainTextPassword = crypto.randomBytes(8).toString('hex');
-
-    let password = sha512.update('nameThatSong' + username + plainTextPassword, 'utf8').digest('hex');
     const salt = new Date().getTime() + crypto.randomBytes(8).toString('hex');
+    const hash = crypto.createHash('sha512').update(salt + password, 'utf8').digest('hex');
 
-
-    sha512 = crypto.createHash('sha512');
-    password = sha512.update(salt + password, 'utf8').digest('hex');
-
+    log.trace({username: username}, 'Password hash has been generated, exiting users.generatePasswordHashForUsername');
     return {
         salt: salt,
-        hash: password,
-        plainTextPassword: plainTextPassword
+        hash: hash
     };
 }
 
+function changeUserPassword(db, user, password) {
+    log.trace({username: user.username}, 'Entered users.changeUserPassword');
+
+    return new Promise((resolve, reject) => {
+        const collection = db.collection('users');
+
+        collection.updateOne({_id: user._id}, {
+            $set: {
+                password: password.hash,
+                salt: password.salt
+            }
+        }).then(() => {
+            log.trace({username: user.username}, 'Password changed for user, resolving from users.changeUserPassword');
+            resolve({user: user});
+        }, (err) => {
+            log.error({
+                error: err,
+                user: user
+            }, 'Error while updating password, rejecting from users.changeUserPassword');
+            reject({
+                error: {
+                    code: 1006,
+                    message: appProperties.errorMessages['1006']
+                }
+            });
+        });
+    });
+}
+
 function resetUserPassword(db, user) {
-    log.trace({user: user}, 'Entered users.resetUserPassword');
+    log.trace({username: user.username}, 'Entered users.resetUserPassword');
 
     return new Promise((resolve, reject) => {
         if (user.email && user.email.length > 0) {
-            const collection = db.collection('users');
-            const password = generatePasswordForUsername(user.username);
+            const plainTextPassword = crypto.randomBytes(8).toString('hex');
 
-            collection.updateOne({_id: user._id}, {
-                $set: {
-                    password: password.hash,
-                    salt: password.salt
-                }
-            }).then(() => {
-                resolve({user: user, password: password.plainTextPassword});
+            const password = generatePasswordHashForUsername(user.username, crypto.createHash('sha512').update('nameThatSong' + user.username + plainTextPassword, 'utf8').digest('hex'));
+
+            changeUserPassword(db, user, password).then((result) => {
+                log.trace({username: user.username}, 'Password reset successful for user.  Resolving form users.resetUserPassword');
+                result.password = plainTextPassword;
+                resolve(result);
             }, (err) => {
-                log.error({
-                    error: err,
-                    user: user
-                }, 'Error while updating password, rejecting from users.resetUserPassword');
-                reject({
-                    error: {
-                        code: 1006,
-                        message: appProperties.errorMessages['1006']
-                    }
-                });
+                log.trace({username: user.username}, 'Error resetting password, rejecting from users.resetUserPassword');
+                reject(err);
             });
         } else {
-            log.trace({user: user}, 'User has no email address, rejecting form users.resetUserPassword');
+            log.trace({username: user.username}, 'User has no email address, rejecting from users.resetUserPassword');
             reject({
                 error: {
                     code: 1013,
@@ -326,7 +333,7 @@ function rollbackUserPassword(db, user) {
                 salt: user.salt
             }
         }).then(() => {
-            log.trace({user: user}, 'User updated, resolving from users.rollbackUserPassword');
+            log.trace({username: user.username}, 'User updated, resolving from users.rollbackUserPassword');
             resolve();
         }, (err) => {
             log.error({
@@ -344,7 +351,7 @@ function rollbackUserPassword(db, user) {
 }
 
 function emailUserNewPassword(username, email, password) {
-    log.trace({email: email, username:username}, 'Entering users.emailUserNewPassword');
+    log.trace({email: email, username: username}, 'Entering users.emailUserNewPassword');
     const transporter = nodemailer.createTransport({
         service: privateProperties.emailService,
         auth: {
@@ -401,7 +408,7 @@ module.exports = {
                     });
                 } else {
                     isUsernameUnique(db, username).then(() => {
-                        if(email && email.length > 0){
+                        if (email && email.length > 0) {
                             isEmailUnique(db, email).then(() => {
                                 insertUser(db, username, password, email).then((result) => {
                                     db.close();
@@ -496,11 +503,16 @@ module.exports = {
                         }
                     });
                 } else {
-                    verifyLogin(db, username, password).then((user) => {
+                    verifyLogin(db, username, password).then((result) => {
                         db.close();
 
                         log.trace({username: username}, 'Username/password combination found, resolving from users.loginUser');
-                        resolve(user);
+
+                        //want to return the entire user except the password and salt
+                        delete result.user.password;
+                        delete result.user.salt;
+
+                        resolve(result);
                     }, (err) => {
                         db.close();
 
@@ -516,7 +528,7 @@ module.exports = {
         return new Promise((resolve, reject) => {
             mongo.connect(privateProperties.mongoUrl, (err, db) => {
                 if (err) {
-                    log.error({error: err}, 'Error with db connection, rejecting from users.loginUser');
+                    log.error({error: err}, 'Error with db connection, rejecting from users.resetPassword');
                     reject({
                         error: {
                             code: 1006,
@@ -558,6 +570,43 @@ module.exports = {
                         db.close();
 
                         log.trace({identifier: identifier}, 'User not found, rejecting from users.resetPassword');
+                        reject(err);
+                    });
+                }
+            });
+        });
+    },
+
+    changePassword: (username, oldPassword, newPassword) => {
+        return new Promise((resolve, reject) => {
+            mongo.connect(privateProperties.mongoUrl, (err, db) => {
+                if (err) {
+                    log.error({error: err}, 'Error with db connection, rejecting from users.changePassword');
+                    reject({
+                        error: {
+                            code: 1006,
+                            message: appProperties.errorMessages['1006']
+                        }
+                    });
+                } else {
+                    verifyLogin(db, username.toLowerCase(), oldPassword).then((result) => {
+                        const password = generatePasswordHashForUsername(result.user.username, newPassword);
+
+                        changeUserPassword(db, result.user, password).then(() => {
+                            db.close();
+
+                            log.trace({username: result.user.username}, "Resolving from users.changePassword");
+                            resolve();
+                        }, (err) => {
+                            db.close();
+
+                            log.trace({username: result.user.username}, 'Error changing user\'s password, rejecting from users.changePassword');
+                            reject(err);
+                        });
+                    }, (err) => {
+                        db.close();
+
+                        log.trace({username: username}, 'Username/password combination not found, rejecting from users.changePassword');
                         reject(err);
                     });
                 }

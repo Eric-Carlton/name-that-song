@@ -46,7 +46,7 @@ server.post('/name-that-song/user/create', (req, res, next) => {
     if (req.params['username']) {
         if (req.params['password']) {
             users.createUser(req.params['username'], req.params['password'], req.params['email']).then( () =>  {
-                log.debug('Sending 200 from /user/create');
+                log.debug({response: 201}, 'Sending response from /user/create');
 
                 res.send(201);
                 return next();
@@ -134,7 +134,7 @@ server.get('/name-that-song/user/available/:username', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/:name/available');
 
     users.checkUsernameAvailable(req.params['username']).then(() => {
-        log.debug({response: 200}, 'Sending response from /user/:name/available');
+        log.debug({response: 204}, 'Sending response from /user/:name/available');
 
         res.send(204);
         return next();
@@ -151,7 +151,7 @@ server.post('/name-that-song/user/password/reset', (req, res, next) => {
 
     if(req.params['identifier']){
         users.resetPassword(req.params['identifier']).then(() =>{
-            log.debug({response: 200}, 'Sending response from /user/password/reset');
+            log.debug({response: 204}, 'Sending response from /user/password/reset');
 
             res.send(204);
             return next();
@@ -170,6 +170,65 @@ server.post('/name-that-song/user/password/reset', (req, res, next) => {
         };
 
         log.debug({response: response}, 'Sending response from /user/password/reset');
+
+        res.send(400, response);
+        return next();
+    }
+});
+
+server.post('/name-that-song/user/password/change', (req, res, next) => {
+    log.debug({identifier: req.params['username'], ipAddress: req.connection.remoteAddress}, 'Request to /user/password/change');
+
+    if(req.params['username']){
+        if(req.params['newPassword']){
+            if(req.params['password']){
+
+                users.changePassword(req.params['username'], req.params['password'], req.params['newPassword']).then(() => {
+                    log.debug({response: 204}, 'Sending response from /user/password/change');
+
+                    res.send(204);
+                    return next();
+                }, (err) => {
+                    log.debug({response: err}, 'Sending response from /user/password/change');
+
+                    res.send(500, err);
+                    return next();
+                });
+            } else {
+                const response = {
+                    error:{
+                        code: 1005,
+                        message: appProperties.errorMessages['1005']
+                    }
+                };
+
+                log.debug({response: response}, 'Sending response from /user/password/change');
+
+                res.send(400, response);
+                return next();
+            }
+        } else {
+            const response = {
+                error:{
+                    code: 1015,
+                    message: appProperties.errorMessages['1015']
+                }
+            };
+
+            log.debug({response: response}, 'Sending response from /user/password/change');
+
+            res.send(400, response);
+            return next();
+        }
+    } else {
+        const response = {
+            error:{
+                code: 1004,
+                message: appProperties.errorMessages['1004']
+            }
+        };
+
+        log.debug({response: response}, 'Sending response from /user/password/change');
 
         res.send(400, response);
         return next();
@@ -287,7 +346,7 @@ server.get('/name-that-song/song/random', (req, res, next) => {
     }
 });
 
-//TODO: t title matcher logic
+//TODO: title matcher logic
 server.post('/name-that-song/song/guess', function (req, res, next) {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'request to /name-that-song/song/guess');
 
