@@ -5,11 +5,21 @@ There is no no-color option ("less --help" for help)
   transform: translateY(-50%);
 }
 
-.section-heading{
-  font-size: large;
+.heading{
   color: white;
   text-align: center;
   background-color: #337ab7;
+}
+
+.page-heading{
+  font-size: x-large;
+  margin-bottom: 50px;
+  .heading;
+}
+
+.section-heading{
+  font-size: large;
+  .heading;
 }
 
 #error{

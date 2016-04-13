@@ -9,6 +9,8 @@
             const resetPasswordBtnText = 'Reset Password';
             const loadingBtnText = 'Loading...';
 
+            $scope.pageHeadingTxt = 'Reset Your Password';
+
             $scope.resetPasswordBtnTxt = resetPasswordBtnText;
 
             $scope.loading = false;

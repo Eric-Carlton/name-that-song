@@ -6,8 +6,6 @@
 (function () {
     angular.module('nameThatSong.guessSong', []).controller(
         'GuessSongCtrl', ['$scope', 'GuessService', function($scope, GuessService){
-            $scope.sectionHeadingTxt = 'Name That Song!';
-
             $scope.error = false;
             $scope.errorMessage = '';
 

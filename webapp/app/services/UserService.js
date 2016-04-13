@@ -114,5 +114,32 @@
                 });
             });
         };
+
+        this.changePassword = (oldPassword, newPassword) => {
+            oldPassword = encryptPassword(_this.user.username, oldPassword);
+            newPassword = encryptPassword(_this.user.username, newPassword);
+
+            return new Promise((resolve, reject) => {
+                $http({
+                    method: 'PUT',
+                    data: {username: _this.user.username, password: oldPassword, newPassword: newPassword},
+                    url: serviceProperties.host + serviceProperties.changePasswordRoute,
+                    timeout: serviceProperties.timeout
+                }).then(() => {
+                    resolve();
+                }, (err) => {
+                    if (err && err.hasOwnProperty('data') && err.data && err.data.hasOwnProperty('error') &&
+                        err.data.error && err.data.error.hasOwnProperty('message') && err.data.error.message &&
+                        err.data.error.hasOwnProperty('code') && err.data.error.code) {
+                        reject(err.data.error);
+                    } else {
+                        reject({
+                            code: '0000',
+                            message: 'Unable to send password change request. Please check internet connection and try again.'
+                        });
+                    }
+                });
+            });
+        };
     }]);
 })();

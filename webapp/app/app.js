@@ -16,6 +16,8 @@ require('./controllers/GuessSongCtrl.js');
 require('./controllers/LoginCtrl.js');
 require('./controllers/RegisterCtrl.js');
 require('./controllers/ResetPasswordCtrl.js');
+require('./controllers/AccountCtrl.js');
+require('./controllers/ChangePasswordCtrl.js');
 
 require('./services/PlaylistService.js');
 require('./services/SongService.js');
@@ -34,7 +36,9 @@ let app = angular.module('nameThatSong', [
     'nameThatSong.login',
     'nameThatSong.user',
     'nameThatSong.register',
-    'nameThatSong.resetPassword'
+    'nameThatSong.resetPassword',
+    'nameThatSong.account',
+    'nameThatSong.changePassword'
 ]);
 
 app.config(['$routeProvider', ($routeProvider) => {
@@ -54,7 +58,15 @@ app.config(['$routeProvider', ($routeProvider) => {
             templateUrl: 'templates/reset_password_view.html',
             controller: 'ResetPasswordCtrl'
         })
-        .otherwise({redirectTo: '/game'});
+        .when('/account', {
+            templateUrl: 'templates/account_view.html',
+            controller: 'AccountCtrl'
+        })
+        .when('/change-password', {
+            templateUrl: 'templates/change_password_view.html',
+            controller: 'ChangePasswordCtrl'
+        })
+        .otherwise({redirectTo: '/account'});
 }]);
 
 app.directive('chooseArtist', () => {

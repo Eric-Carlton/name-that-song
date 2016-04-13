@@ -9,6 +9,8 @@
             const loginBtnTxt = 'Login';
             const loadingBtnTxt = 'Loading...';
 
+            $scope.pageHeadingTxt = "Log in to Name that Song!";
+
             $scope.loginBtnTxt = loginBtnTxt;
             $scope.usernameLblTxt = 'Username: ';
             $scope.passwordLblTxt = 'Password: ';

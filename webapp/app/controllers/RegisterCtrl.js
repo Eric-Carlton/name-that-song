@@ -13,6 +13,8 @@
             const registerBtnTxt = 'Create Account';
             const loadingBtnTxt = 'Loading...';
 
+            $scope.pageHeadingTxt = 'Create an Account';
+
             $scope.registerBtnTxt = registerBtnTxt;
 
             $scope.error = false;
