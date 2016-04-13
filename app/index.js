@@ -15,7 +15,7 @@ const log = bunyan.createLogger({
         },
         {
             type: 'rotating-file',
-            path: 'log/name-that-song-trace.log',
+            path: 'log/api-trace.log',
             level: 'trace',
             period: '1d',
             count: 7
@@ -40,7 +40,7 @@ server.use(restify.acceptParser(server.acceptable));
 server.use(restify.queryParser());
 server.use(restify.bodyParser());
 
-server.post('/name-that-song/user/create', (req, res, next) => {
+server.post('/api/user/create', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/create');
 
     if (req.params['username']) {
@@ -85,7 +85,7 @@ server.post('/name-that-song/user/create', (req, res, next) => {
     }
 });
 
-server.post('/name-that-song/user/login', (req, res, next) =>{
+server.post('/api/user/login', (req, res, next) =>{
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/login');
 
     if (req.params['username']) {
@@ -130,7 +130,7 @@ server.post('/name-that-song/user/login', (req, res, next) =>{
     }
 });
 
-server.get('/name-that-song/user/available/:username', (req, res, next) => {
+server.get('/api/user/available/:username', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/available/:username');
 
     users.checkUsernameAvailable(req.params['username']).then(() => {
@@ -146,7 +146,7 @@ server.get('/name-that-song/user/available/:username', (req, res, next) => {
     });
 });
 
-server.post('/name-that-song/user/password/reset', (req, res, next) => {
+server.post('/api/user/password/reset', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/password/reset');
 
     if(req.params['identifier']){
@@ -176,7 +176,7 @@ server.post('/name-that-song/user/password/reset', (req, res, next) => {
     }
 });
 
-server.put('/name-that-song/user/password/change', (req, res, next) => {
+server.put('/api/user/password/change', (req, res, next) => {
     log.debug({identifier: req.params['username'], ipAddress: req.connection.remoteAddress}, 'Request to /user/password/change');
 
     if(req.params['username']){
@@ -235,7 +235,7 @@ server.put('/name-that-song/user/password/change', (req, res, next) => {
     }
 });
 
-server.get('/name-that-song/playlist/generate/:artist', (req, res, next) => {
+server.get('/api/playlist/generate/:artist', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /playlist/generate/:artist');
 
     //generate playlist from artist given
@@ -282,7 +282,7 @@ server.get('/name-that-song/playlist/generate/:artist', (req, res, next) => {
     });
 });
 
-server.get('/name-that-song/song/random', (req, res, next) => {
+server.get('/api/song/random', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'request to /song/random');
 
     //playlist not yet generated, send 404
@@ -347,12 +347,12 @@ server.get('/name-that-song/song/random', (req, res, next) => {
 });
 
 //TODO: title matcher logic
-server.post('/name-that-song/song/guess', function (req, res, next) {
-    log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'request to /name-that-song/song/guess');
+server.post('/api/song/guess', function (req, res, next) {
+    log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'request to /api/song/guess');
 
     const response = {correct: true, score: 1};
 
-    log.debug({response: response}, 'Sending response from /name-that-song/song/guess');
+    log.debug({response: response}, 'Sending response from /api/song/guess');
     res.send(200, response);
 
     return next();

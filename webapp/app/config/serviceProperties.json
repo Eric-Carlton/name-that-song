@@ -1,5 +1,5 @@
 {
-    "host": "http://localhost:8008/name-that-song",
+    "host": "http://localhost:8008/api",
     "generatePlaylistRoute": "/playlist/generate/",
     "randomSongRoute": "/song/random",
     "guessSongRoute": "/song/guess",
