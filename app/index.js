@@ -176,7 +176,7 @@ server.post('/name-that-song/user/password/reset', (req, res, next) => {
     }
 });
 
-server.post('/name-that-song/user/password/change', (req, res, next) => {
+server.put('/name-that-song/user/password/change', (req, res, next) => {
     log.debug({identifier: req.params['username'], ipAddress: req.connection.remoteAddress}, 'Request to /user/password/change');
 
     if(req.params['username']){
