@@ -17,6 +17,7 @@
     "mongodb": "^2.1.7",
     "nodemailer": "^2.1.0",
     "restify": "^4.0.3",
+    "socket.io": "^1.4.5",
     "tooltip": "^1.6.0"
   },
   "devDependencies": {

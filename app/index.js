@@ -5,6 +5,7 @@ const appProperties = require('./config/appProperties');
 const gameController = require('./controllers/gameController');
 const playlist = require('./utils/playlist');
 const users = require('./utils/users');
+const rooms = require('./utils/rooms');
 
 const log = bunyan.createLogger({
     name: 'name-that-song',
@@ -45,7 +46,7 @@ server.post('/api/user/create', (req, res, next) => {
 
     if (req.params['username']) {
         if (req.params['password']) {
-            users.createUser(req.params['username'], req.params['password'], req.params['email']).then( () =>  {
+            users.createUser(req.params['username'], req.params['password'], req.params['email']).then(() => {
                 log.debug({response: 201}, 'Sending response from /user/create');
 
                 res.send(201);
@@ -85,12 +86,12 @@ server.post('/api/user/create', (req, res, next) => {
     }
 });
 
-server.post('/api/user/login', (req, res, next) =>{
+server.post('/api/user/login', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/login');
 
     if (req.params['username']) {
         if (req.params['password']) {
-            users.loginUser(req.params['username'], req.params['password']).then( (user) =>  {
+            users.loginUser(req.params['username'], req.params['password']).then((user) => {
                 log.debug({response: user}, 'Sending response from /user/login');
 
                 res.send(200, user);
@@ -149,8 +150,8 @@ server.get('/api/user/available/:username', (req, res, next) => {
 server.post('/api/user/password/reset', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/password/reset');
 
-    if(req.params['identifier']){
-        users.resetPassword(req.params['identifier']).then(() =>{
+    if (req.params['identifier']) {
+        users.resetPassword(req.params['identifier']).then(() => {
             log.debug({response: 204}, 'Sending response from /user/password/reset');
 
             res.send(204);
@@ -177,11 +178,14 @@ server.post('/api/user/password/reset', (req, res, next) => {
 });
 
 server.put('/api/user/password/change', (req, res, next) => {
-    log.debug({identifier: req.params['username'], ipAddress: req.connection.remoteAddress}, 'Request to /user/password/change');
+    log.debug({
+        identifier: req.params['username'],
+        ipAddress: req.connection.remoteAddress
+    }, 'Request to /user/password/change');
 
-    if(req.params['username']){
-        if(req.params['newPassword']){
-            if(req.params['password']){
+    if (req.params['username']) {
+        if (req.params['newPassword']) {
+            if (req.params['password']) {
 
                 users.changePassword(req.params['username'], req.params['password'], req.params['newPassword']).then(() => {
                     log.debug({response: 204}, 'Sending response from /user/password/change');
@@ -196,7 +200,7 @@ server.put('/api/user/password/change', (req, res, next) => {
                 });
             } else {
                 const response = {
-                    error:{
+                    error: {
                         code: 1005,
                         message: appProperties.errorMessages['1005']
                     }
@@ -209,7 +213,7 @@ server.put('/api/user/password/change', (req, res, next) => {
             }
         } else {
             const response = {
-                error:{
+                error: {
                     code: 1015,
                     message: appProperties.errorMessages['1015']
                 }
@@ -222,7 +226,7 @@ server.put('/api/user/password/change', (req, res, next) => {
         }
     } else {
         const response = {
-            error:{
+            error: {
                 code: 1004,
                 message: appProperties.errorMessages['1004']
             }
@@ -358,6 +362,127 @@ server.post('/api/song/guess', function (req, res, next) {
     return next();
 });
 
-server.listen(appProperties.port, function () {
+server.post('/api/room', function (req, res, next) {
+    log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'request to /api/room');
+
+    if (req.params['artist']) {
+        if (req.params['user']) {
+            if (req.params.user['username']) {
+                if (req.params.user['_id']) {
+                    rooms.retrieveRoom(req.params.user.username).then((room) => {
+                        if (room) {
+                            const response = {room: room};
+
+                            log.debug({response: response}, 'sending response from /room');
+
+                            res.send(200, response);
+                            return next();
+                        } else {
+                            playlist.retrievePlaylistForArtist(req.params['artist']).then((playlist) => {
+                                //check that playlist has been given in correct format
+                                if (playlist.hasOwnProperty('response') &&
+                                    playlist.response.hasOwnProperty('songs') &&
+                                    playlist.response.songs.length >= 10) {
+
+                                    rooms.createRoom(req.params.user, playlist.response.songs).then((room) => {
+                                        const response = {room: room};
+
+                                        log.debug({response: response}, 'sending response from /room');
+
+                                        res.send(200, response);
+                                        return next();
+                                    }, (err) => {
+                                        log.debug({response: err}, 'Sending response from /room');
+
+                                        res.send(500, err);
+                                        return next();
+                                    });
+                                } else {
+                                    const response = {
+                                        error: {
+                                            code: 1000,
+                                            message: appProperties.errorMessages['1000']
+                                        }
+                                    };
+
+                                    log.error('No songs retrieved');
+                                    log.debug({response: response}, 'sending response from /room');
+
+                                    //no songs retrieved for artist, send 404
+                                    res.send(404, response);
+
+                                    return next();
+                                }
+                            }, () => {
+                                const response = {
+                                    error: {
+                                        code: 1000,
+                                        message: appProperties.errorMessages['1000']
+                                    }
+                                };
+
+                                log.debug({response: response}, 'sending response from /room');
+
+                                //error sent from echonest, bubble up
+                                res.send(404, response);
+                                return next();
+                            });
+                        }
+                    });
+                } else {
+                    const response = {
+                        error: {
+                            code: '1019',
+                            message: appProperties.errorMessages['1019']
+                        }
+                    };
+
+                    log.debug({response: response}, 'Sending response from /room');
+
+                    res.send(400, response);
+                    return next();
+                }
+            } else {
+                const response = {
+                    error: {
+                        code: '1018',
+                        message: appProperties.errorMessages['1018']
+                    }
+                };
+
+                log.debug({response: response}, 'Sending response from /room');
+
+                res.send(400, response);
+                return next();
+            }
+        } else {
+            const response = {
+                error: {
+                    code: '1017',
+                    message: appProperties.errorMessages['1017']
+                }
+            };
+
+            log.debug({response: response}, 'Sending response from /room');
+
+            res.send(400, response);
+            return next();
+        }
+    } else {
+        const response = {
+            error: {
+                code: '1016',
+                message: appProperties.errorMessages['1016']
+            }
+        };
+
+        log.debug({response: response}, 'Sending response from /room');
+
+        res.send(400, response);
+        return next();
+    }
+});
+
+server.listen(appProperties.serverPort, function () {
     log.debug('%s listening at %s', server.name, server.url);
 });

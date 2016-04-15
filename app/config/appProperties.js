@@ -5,7 +5,8 @@ module.exports = {
     echonestFormat: 'json',
     echonestResults: 200,
     echonestType: 'artist-radio',
-    port: 8008,
+    serverPort: 8008,
+    socketPort: 8009,
     errorMessages: {
         1000: 'No songs found for artist. Please choose another artist and try again.',
         1001: 'No playlist generated.  Please generate a playlist before requesting a song.',
@@ -22,7 +23,11 @@ module.exports = {
         1012: 'No identifier in request',
         1013: 'Unable to reset password because user has no associated email address',
         1014: 'Account with email address already registered',
-        1015: 'No newPassword in request'
+        1015: 'No newPassword in request',
+        1016: 'No artist in request',
+        1017: 'No user in request',
+        1018: 'No user.username in request',
+        1019: 'No user._id in request'
     },
     stdErrLvl: 'trace'
 };

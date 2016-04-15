@@ -71,7 +71,7 @@ function getUser(db, query) {
             if(doc){
                 log.trace({username: doc.username}, 'User found, resolving from users.getUser');
             } else {
-                log.trace({username: query.username}, 'User not found, resolving from users.getUser with null');
+                log.trace({query: query}, 'User not found, resolving from users.getUser with null');
             }
             resolve(doc);
         }, (err) => {
