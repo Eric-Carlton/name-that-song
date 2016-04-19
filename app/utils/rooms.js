@@ -4,6 +4,8 @@
 "use strict";
 
 const mongo = require('mongodb').MongoClient;
+var ObjectId = require('mongodb').ObjectID;
+const users = require('./users');
 const privateProperties = require('../config/privateProperties');
 const appProperties = require('../config/appProperties');
 const bunyan = require('bunyan');
@@ -59,6 +61,34 @@ function insertRoom(db, host, playlist) {
             });
         }, (err) => {
             log.error({roomName: host.username, error: err}, 'Error creating room, rejecting from rooms.insertRoom');
+            reject({
+                error: {
+                    code: 1006,
+                    message: appProperties.errorMessages['1006']
+                }
+            });
+        });
+    });
+}
+
+function updateRoomUsers(db, roomId, users) {
+    const collection = db.collection('users');
+
+    return new Promise((resolve, reject) => {
+        collection.updateOne({_id: new ObjectId(roomId)}, {
+            $set: {
+                users: users
+            }
+        }).then((room) => {
+            delete room.playlist;
+
+            log.trace({roomId: roomId, room: room}, 'Resolving from rooms.updateRoomUsers');
+            resolve(room);
+        }, (err) => {
+            log.error({
+                error: err,
+                roomId: roomId
+            }, 'Error while updating users for room, rejecting from rooms.updateRoomUsers');
             reject({
                 error: {
                     code: 1006,
@@ -126,7 +156,7 @@ function getRoomByName(db, roomName) {
 
 function getRoomById(db, id) {
     const query = {
-        _id: id
+        _id: new ObjectId(id)
     };
 
     return new Promise((resolve, reject) => {
@@ -201,7 +231,7 @@ module.exports = {
                     getRoomByNameOrId(db, identifier).then((room) => {
                         db.close();
 
-                        if(room){
+                        if (room) {
                             log.trace({identifier: identifier}, 'Room found, resolving from rooms.retrieveRoom');
 
                             delete room.playlist;
@@ -266,6 +296,111 @@ module.exports = {
                         reject(err);
                     });
                 }
+            });
+        });
+    },
+
+    joinRoom: (ownerName, user) => {
+        log.trace({roomName: ownerName}, 'Entered rooms.joinRoom');
+
+        return new Promise((resolve, reject) => {
+            users.getUser(user._id).then((foundUser) => {
+                if (foundUser) {
+                    mongo.connect(privateProperties.mongoUrl, (err, db) => {
+                        if (err) {
+                            log.error({error: err}, 'Error with db connection, rejecting from rooms.joinRoom');
+                            reject({
+                                error: {
+                                    code: 1006,
+                                    message: appProperties.errorMessages['1006']
+                                }
+                            });
+                        } else {
+                            getRoomByName(db, ownerName.toLowerCase()).then((room) => {
+                                if (room) {
+
+                                    let userInRoom = false;
+                                    for (let userIdx = 0; userIdx < room.users.length; userIdx++) {
+                                        let roomUser = room.users[userIdx];
+
+                                        if (user._id === roomUser._id) {
+                                            userInRoom = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if (userInRoom) {
+                                        db.close();
+
+                                        log.trace({
+                                            roomName: ownerName,
+                                            user: foundUser
+                                        }, 'User already in room, resolving from rooms.joinRoom');
+
+                                        delete room.playlist;
+
+                                        resolve(room);
+                                    } else {
+                                        room.users.push({
+                                            _id: foundUser._id,
+                                            username: foundUser.username,
+                                            score: 0,
+                                            isHost: false
+                                        });
+
+                                        updateRoomUsers(db, room._id, room.users).then((room) => {
+                                            db.close();
+
+                                            log.trace({
+                                                roomName: ownerName,
+                                                user: foundUser
+                                            }, 'User added to room, resolving from rooms.joinRoom');
+                                            resolve(room);
+                                        }, (err) => {
+                                            db.close();
+
+                                            log.trace({
+                                                error: err,
+                                                roomName: ownerName,
+                                                user: foundUser
+                                            }, 'Error adding user to room, rejecting from rooms.joinRoom');
+                                            reject(err);
+                                        });
+                                    }
+                                } else {
+                                    db.close();
+
+                                    log.trace({roomName: ownerName}, 'Room not found, resolving from rooms.joinRoom with null');
+                                    resolve(null);
+                                }
+                            }, (err) => {
+                                db.close();
+
+                                log.trace({roomName: ownerName}, 'Error querying for room, rejecting from rooms.joinRoom');
+                                reject(err);
+                            });
+                        }
+                    });
+                } else {
+                    const err = {
+                        error: {
+                            code: 1023,
+                            message: appProperties.errorMessages['1023']
+                        }
+                    };
+
+                    log.trace({
+                        roomName: ownerName,
+                        userId: user._id
+                    }, 'User does not exist, rejecting from rooms.joinRoom');
+                    reject(err);
+                }
+            }, (err) => {
+                log.trace({
+                    roomName: ownerName,
+                    userId: user._id
+                }, 'Error searching for user, rejecting from rooms.joinRoom');
+                reject(err);
             });
         });
     }

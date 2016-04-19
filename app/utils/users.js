@@ -4,6 +4,7 @@
 'use strict';
 
 const mongo = require('mongodb').MongoClient;
+var ObjectId = require('mongodb').ObjectID;
 const privateProperties = require('../config/privateProperties');
 const appProperties = require('../config/appProperties');
 const bunyan = require('bunyan');
@@ -127,6 +128,27 @@ function getUserByEmail(db, email) {
                 error: err,
                 email: email
             }, 'Error while searching for user by email, rejecting from users.getUserByEmail');
+            reject(err);
+        });
+    });
+}
+
+function getUserById(db, id) {
+    log.trace({userId: id}, 'Entered users.getUserById');
+
+    return new Promise((resolve, reject) => {
+        getUser(db, {_id: new ObjectId(id)}).then((user) => {
+            if(user){
+                log.trace({userId: user._id}, 'User found, resolving from users.getUserById');
+            } else {
+                log.trace({userId: id}, 'User not found, resolving from users.getUserById with null');
+            }
+            resolve(user);
+        }, (err) => {
+            log.trace({
+                error: err,
+                userId: id
+            }, 'Error while searching for user by id, rejecting from users.getUserById');
             reject(err);
         });
     });
@@ -624,6 +646,46 @@ module.exports = {
                         db.close();
 
                         log.trace({username: username}, 'Username/password combination not found, rejecting from users.changePassword');
+                        reject(err);
+                    });
+                }
+            });
+        });
+    },
+
+    getUser: (id) => {
+        log.trace({userId: id}, 'Entered users.getUser');
+
+        return new Promise((resolve, reject) => {
+            mongo.connect(privateProperties.mongoUrl, (err, db) => {
+                if (err) {
+                    log.error({error: err}, 'Error with db connection, rejecting from users.getUser');
+                    reject({
+                        error: {
+                            code: 1006,
+                            message: appProperties.errorMessages['1006']
+                        }
+                    });
+                } else {
+                    getUserById(db, id).then((user) => {
+                        if (user) {
+                            db.close();
+
+                            delete user.password;
+                            delete user.salt;
+
+                            log.trace({userId: id}, 'User found, resolving from users.getUser');
+                            resolve(user);
+                        } else {
+                            db.close();
+
+                            log.trace({userId: id}, 'User not found, resolving from users.getUser with null');
+                            resolve(null);
+                        }
+                    }, (err) => {
+                        db.close();
+
+                        log.trace({userId: id}, 'Error querying for user, rejecting from users.getUser');
                         reject(err);
                     });
                 }
