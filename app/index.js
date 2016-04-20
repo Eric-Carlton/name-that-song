@@ -366,10 +366,10 @@ server.post('/api/room', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'request to /api/room');
 
     if (req.params.hasOwnProperty('artist')) {
-        if (req.params.hasOwnProperty('user')) {
-            if (req.params.user.hasOwnProperty('username')) {
-                if (req.params.user.hasOwnProperty('_id')) {
-                    rooms.retrieveRoom(req.params.user.username).then((room) => {
+        if (req.params.hasOwnProperty('userId')) {
+            users.getUser(req.params.userId).then((user) => {
+                if (user) {
+                    rooms.retrieveRoom(user.username).then((room) => {
                         if (room) {
                             const response = {room: room};
 
@@ -384,7 +384,7 @@ server.post('/api/room', (req, res, next) => {
                                     playlist.response.hasOwnProperty('songs') &&
                                     playlist.response.songs.length >= 10) {
 
-                                    rooms.createRoom(req.params.user, playlist.response.songs).then((room) => {
+                                    rooms.createRoom(user, playlist.response.songs).then((room) => {
                                         const response = {room: room};
 
                                         log.debug({response: response}, 'sending response from /room');
@@ -432,8 +432,8 @@ server.post('/api/room', (req, res, next) => {
                 } else {
                     const response = {
                         error: {
-                            code: '1019',
-                            message: appProperties.errorMessages['1019']
+                            code: '1023',
+                            message: appProperties.errorMessages['1023']
                         }
                     };
 
@@ -442,24 +442,17 @@ server.post('/api/room', (req, res, next) => {
                     res.send(400, response);
                     return next();
                 }
-            } else {
-                const response = {
-                    error: {
-                        code: '1018',
-                        message: appProperties.errorMessages['1018']
-                    }
-                };
+            }, (err) => {
+                log.debug({response: err}, 'Sending response from /api/room/:ownerName');
 
-                log.debug({response: response}, 'Sending response from /room');
-
-                res.send(400, response);
+                res.send(500, err);
                 return next();
-            }
+            });
         } else {
             const response = {
                 error: {
-                    code: '1017',
-                    message: appProperties.errorMessages['1017']
+                    code: '1024',
+                    message: appProperties.errorMessages['1024']
                 }
             };
 
@@ -487,72 +480,44 @@ server.put('/api/room/:ownerName', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /api/room/:ownerName');
 
     if (req.params.hasOwnProperty('operation')) {
-        if (req.params.hasOwnProperty('user')) {
-            if (req.params.user.hasOwnProperty('username')) {
-                if (req.params.user.hasOwnProperty('_id')) {
-                    if (req.params.operation.toLowerCase() === 'join') {
-                        rooms.joinRoom(req.params.ownerName.toLowerCase(), req.params.user).then((room) => {
-                            if (room) {
-                                const response = {room: room};
+        if (req.params.hasOwnProperty('userId')) {
+            if (req.params.operation.toLowerCase() === 'join') {
+                rooms.joinRoom(req.params.ownerName.toLowerCase(), req.params.userId).then((room) => {
+                    if (room) {
+                        const response = {room: room};
 
-                                log.debug({response: response}, 'sending response from /api/room/:ownerName');
+                        log.debug({response: response}, 'sending response from /api/room/:ownerName');
 
-                                res.send(200, response);
-                                return next();
-                            } else {
-                                const response = {
-                                    error: {
-                                        code: '1022',
-                                        message: appProperties.errorMessages['1022']
-                                    }
-                                };
-
-                                log.debug({response: response}, 'Sending response from /api/room/:ownerName');
-
-                                res.send(404, response);
-                                return next();
-                            }
-                        }, (err) => {
-                            log.debug({response: err}, 'Sending response from /api/room/:ownerName');
-
-                            res.send(500, err);
-                            return next();
-                        });
-                    } else if (req.params.operation.toLowerCase() === 'leave') {
-                        log.debug('Sending 501 from /api/room/:ownerName');
-                        res.send(501);
+                        res.send(200, response);
                         return next();
                     } else {
                         const response = {
                             error: {
-                                code: '1021',
-                                message: appProperties.errorMessages['1021']
+                                code: '1022',
+                                message: appProperties.errorMessages['1022']
                             }
                         };
 
                         log.debug({response: response}, 'Sending response from /api/room/:ownerName');
 
-                        res.send(400, response);
+                        res.send(404, response);
                         return next();
                     }
-                } else {
-                    const response = {
-                        error: {
-                            code: '1019',
-                            message: appProperties.errorMessages['1019']
-                        }
-                    };
+                }, (err) => {
+                    log.debug({response: err}, 'Sending response from /api/room/:ownerName');
 
-                    log.debug({response: response}, 'Sending response from /api/room/:ownerName');
-
-                    res.send(400, response);
+                    res.send(500, err);
                     return next();
-                }
+                });
+            } else if (req.params.operation.toLowerCase() === 'leave') {
+                log.debug('Sending 501 from /api/room/:ownerName');
+                res.send(501);
+                return next();
             } else {
                 const response = {
                     error: {
-                        code: '1018',
-                        message: appProperties.errorMessages['1018']
+                        code: '1021',
+                        message: appProperties.errorMessages['1021']
                     }
                 };
 
@@ -561,11 +526,12 @@ server.put('/api/room/:ownerName', (req, res, next) => {
                 res.send(400, response);
                 return next();
             }
+
         } else {
             const response = {
                 error: {
-                    code: '1017',
-                    message: appProperties.errorMessages['1017']
+                    code: '1024',
+                    message: appProperties.errorMessages['1024']
                 }
             };
 

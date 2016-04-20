@@ -31,7 +31,8 @@ module.exports = {
         1020: 'No operation in request',
         1021: 'Only operation values of \'join\' or \'leave\' are permitted',
         1022: 'Room does not exist',
-        1023: 'User does not exist'
+        1023: 'User does not exist',
+        1024: 'No userId in request'
     },
     stdErrLvl: 'trace'
 };

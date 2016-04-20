@@ -37,6 +37,8 @@ function insertRoom(db, host, playlist) {
         host.score = 0;
         host.isHost = true;
 
+        delete host.email;
+
         collection.insertOne({
             roomName: host.username.toLowerCase(),
             users: [host],
@@ -71,23 +73,23 @@ function insertRoom(db, host, playlist) {
     });
 }
 
-function updateRoomUsers(db, roomId, users) {
-    const collection = db.collection('users');
+function updateRoomUsers(db, room) {
+    log.trace({roomId: room._id}, 'Entered rooms.updateRoomUsers');
+
+    const collection = db.collection('rooms');
 
     return new Promise((resolve, reject) => {
-        collection.updateOne({_id: new ObjectId(roomId)}, {
+        collection.updateOne({_id: room._id}, {
             $set: {
-                users: users
+                users: room.users
             }
-        }).then((room) => {
-            delete room.playlist;
-
-            log.trace({roomId: roomId, room: room}, 'Resolving from rooms.updateRoomUsers');
-            resolve(room);
+        }).then((result) => {
+            log.trace({result: result, roomId: room._id}, 'Resolving from rooms.updateRoomUsers');
+            resolve();
         }, (err) => {
             log.error({
                 error: err,
-                roomId: roomId
+                roomId: room._id
             }, 'Error while updating users for room, rejecting from rooms.updateRoomUsers');
             reject({
                 error: {
@@ -300,12 +302,12 @@ module.exports = {
         });
     },
 
-    joinRoom: (ownerName, user) => {
+    joinRoom: (ownerName, userId) => {
         log.trace({roomName: ownerName}, 'Entered rooms.joinRoom');
 
         return new Promise((resolve, reject) => {
-            users.getUser(user._id).then((foundUser) => {
-                if (foundUser) {
+            users.getUser(userId).then((user) => {
+                if (user) {
                     mongo.connect(privateProperties.mongoUrl, (err, db) => {
                         if (err) {
                             log.error({error: err}, 'Error with db connection, rejecting from rooms.joinRoom');
@@ -319,22 +321,22 @@ module.exports = {
                             getRoomByName(db, ownerName.toLowerCase()).then((room) => {
                                 if (room) {
 
-                                    let userInRoom = false;
+                                    let isUserInRoom = false;
                                     for (let userIdx = 0; userIdx < room.users.length; userIdx++) {
-                                        let roomUser = room.users[userIdx];
+                                        let userInRoom = room.users[userIdx];
 
-                                        if (user._id === roomUser._id) {
-                                            userInRoom = true;
+                                        if (user.username === userInRoom.username) {
+                                            isUserInRoom = true;
                                             break;
                                         }
                                     }
 
-                                    if (userInRoom) {
+                                    if (isUserInRoom) {
                                         db.close();
 
                                         log.trace({
                                             roomName: ownerName,
-                                            user: foundUser
+                                            user: user.username
                                         }, 'User already in room, resolving from rooms.joinRoom');
 
                                         delete room.playlist;
@@ -342,27 +344,33 @@ module.exports = {
                                         resolve(room);
                                     } else {
                                         room.users.push({
-                                            _id: foundUser._id,
-                                            username: foundUser.username,
+                                            _id: user._id,
+                                            username: user.username,
                                             score: 0,
                                             isHost: false
                                         });
 
-                                        updateRoomUsers(db, room._id, room.users).then((room) => {
-                                            db.close();
+                                        log.trace({users: room.users}, 'Room users changed');
 
-                                            log.trace({
-                                                roomName: ownerName,
-                                                user: foundUser
-                                            }, 'User added to room, resolving from rooms.joinRoom');
-                                            resolve(room);
+                                        updateRoomUsers(db, room).then(() => {
+                                            getRoomByName(db, ownerName).then((room) => {
+                                                db.close();
+
+                                                delete room.playlist;
+
+                                                log.trace({
+                                                    roomName: ownerName,
+                                                    user: user
+                                                }, 'User added to room, resolving from rooms.joinRoom');
+                                                resolve(room);
+                                            });
                                         }, (err) => {
                                             db.close();
 
                                             log.trace({
                                                 error: err,
                                                 roomName: ownerName,
-                                                user: foundUser
+                                                user: user
                                             }, 'Error adding user to room, rejecting from rooms.joinRoom');
                                             reject(err);
                                         });
@@ -391,14 +399,14 @@ module.exports = {
 
                     log.trace({
                         roomName: ownerName,
-                        userId: user._id
+                        userId: userId._id
                     }, 'User does not exist, rejecting from rooms.joinRoom');
                     reject(err);
                 }
             }, (err) => {
                 log.trace({
                     roomName: ownerName,
-                    userId: user._id
+                    userId: userId._id
                 }, 'Error searching for user, rejecting from rooms.joinRoom');
                 reject(err);
             });
