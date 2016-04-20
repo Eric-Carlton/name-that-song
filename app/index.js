@@ -510,9 +510,19 @@ server.put('/api/room/:ownerName', (req, res, next) => {
                     return next();
                 });
             } else if (req.params.operation.toLowerCase() === 'leave') {
-                log.debug('Sending 501 from /api/room/:ownerName');
-                res.send(501);
-                return next();
+                rooms.leaveRoom(req.params.ownerName, req.params.userId).then((room) => {
+                    const response = {room: room};
+
+                    log.debug({response: response}, 'sending response from /api/room/:ownerName');
+
+                    res.send(200, response);
+                    return next();
+                }, (err) => {
+                    log.debug({response: err}, 'Sending response from /api/room/:ownerName');
+
+                    res.send(500, err);
+                    return next();
+                });
             } else {
                 const response = {
                     error: {

@@ -4,7 +4,6 @@
 "use strict";
 
 const mongo = require('mongodb').MongoClient;
-var ObjectId = require('mongodb').ObjectID;
 const users = require('./users');
 const privateProperties = require('../config/privateProperties');
 const appProperties = require('../config/appProperties');
@@ -70,6 +69,30 @@ function insertRoom(db, host, playlist) {
                 }
             });
         });
+    });
+}
+
+function deleteRoom(db, room) {
+    log.trace({roomId: room._id}, 'Entered rooms.deleteRoom');
+
+    const collection = db.collection('rooms');
+
+    return new Promise((resolve, reject) => {
+       collection.deleteOne({_id: room._id}).then((result) => {
+           log.trace({result: result, roomId: room._id}, 'Room deleted, resolving from rooms.deleteRoom');
+           resolve();
+       }, (err) => {
+           log.error({
+               error: err,
+               roomId: room._id
+           }, 'Error while deleting room, rejecting from rooms.updateRoomUsers');
+           reject({
+               error: {
+                   code: 1006,
+                   message: appProperties.errorMessages['1006']
+               }
+           });
+       });
     });
 }
 
@@ -157,8 +180,10 @@ function getRoomByName(db, roomName) {
 }
 
 function getRoomById(db, id) {
+    log.trace({id: id}, 'Entered rooms.getRoomById');
+
     const query = {
-        _id: new ObjectId(id)
+        _id: id
     };
 
     return new Promise((resolve, reject) => {
@@ -271,6 +296,7 @@ module.exports = {
                     });
                 } else {
                     getRoomByName(db, host.username.toLowerCase()).then((room) => {
+                        log.trace("Made it here");
                         if (room) {
                             db.close();
 
@@ -409,6 +435,102 @@ module.exports = {
                     userId: userId._id
                 }, 'Error searching for user, rejecting from rooms.joinRoom');
                 reject(err);
+            });
+        });
+    },
+
+    leaveRoom: (ownerName, userId) => {
+        log.trace({roomName: ownerName}, 'Entered rooms.joinRoom');
+
+        return new Promise((resolve, reject) => {
+            mongo.connect(privateProperties.mongoUrl, (err, db) => {
+                if (err) {
+                    log.error({error: err}, 'Error with db connection, rejecting from rooms.retrieveRoom');
+                    reject({
+                        error: {
+                            code: 1006,
+                            message: appProperties.errorMessages['1006']
+                        }
+                    });
+                } else {
+                    getRoomByName(db, ownerName).then((room) => {
+                        if(room){
+                            //determine if the host is leaving
+                            let isHostLeaving = false;
+                            //build a new users array with the users that are not leaving
+                            let users = [];
+                            for(let userIdx = 0; userIdx < room.users.length; userIdx++){
+                                let userInRoom = room.users[userIdx];
+
+                                if(userInRoom._id === userId){
+                                    isHostLeaving = userInRoom.isHost;
+                                } else {
+                                    users.push(userInRoom);
+                                }
+                            }
+
+                            log.trace({users: users, userId: userId}, "User with userId removed");
+                            room.users = users;
+
+                            if(isHostLeaving){
+                                deleteRoom(db, room).then(() => {
+                                    getRoomByName(db, ownerName).then((room) => {
+                                       db.close();
+
+                                        log.trace({roomName:ownerName}, 'Resolving from rooms.leaveRoom');
+                                        resolve(room);
+                                    },(err) => {
+                                        db.close();
+
+                                        log.trace({roomName: ownerName}, 'Error querying for room after delete, rejecting from rooms.leaveRoom');
+                                        reject(err);
+                                    });
+                                }, (err) => {
+                                    db.close();
+
+                                    log.trace({roomName: ownerName}, 'Error updating room users, rejecting from rooms.leaveRoom');
+                                    reject(err);
+                                });
+                            } else {
+                                updateRoomUsers(db, room).then(() => {
+                                    getRoomByName(db, ownerName).then((room) => {
+                                        db.close();
+
+                                        delete room.playlist;
+
+                                        log.trace({roomName:ownerName}, 'Resolving from rooms.leaveRoom');
+                                        resolve(room);
+                                    },(err) => {
+                                        db.close();
+
+                                        log.trace({roomName: ownerName}, 'Error querying for room after removing user, rejecting from rooms.leaveRoom');
+                                        reject(err);
+                                    });
+                                }, (err) => {
+                                    db.close();
+
+                                    log.trace({roomName: ownerName}, 'Error updating room users, rejecting from rooms.leaveRoom');
+                                    reject(err);
+                                });
+                            }
+                        } else {
+                            db.close();
+
+                            log.error({roomName: ownerName}, 'Room does not exist, rejecting from rooms.leaveRoom');
+                            reject({
+                                error: {
+                                    code: '1022',
+                                    message: appProperties.errorMessages['1022']
+                                }
+                            });
+                        }
+                    }, (err) => {
+                        db.close();
+
+                        log.trace({roomName: ownerName}, 'Error querying for room, rejecting from rooms.leaveRoom');
+                        reject(err);
+                    });
+                }
             });
         });
     }

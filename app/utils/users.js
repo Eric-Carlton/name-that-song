@@ -4,7 +4,6 @@
 'use strict';
 
 const mongo = require('mongodb').MongoClient;
-var ObjectId = require('mongodb').ObjectID;
 const privateProperties = require('../config/privateProperties');
 const appProperties = require('../config/appProperties');
 const bunyan = require('bunyan');
@@ -137,7 +136,7 @@ function getUserById(db, id) {
     log.trace({userId: id}, 'Entered users.getUserById');
 
     return new Promise((resolve, reject) => {
-        getUser(db, {_id: new ObjectId(id)}).then((user) => {
+        getUser(db, {_id: id}).then((user) => {
             if(user){
                 log.trace({userId: user._id}, 'User found, resolving from users.getUserById');
             } else {
