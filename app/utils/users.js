@@ -8,6 +8,7 @@ const privateProperties = require('../config/privateProperties');
 const appProperties = require('../config/appProperties');
 const bunyan = require('bunyan');
 const crypto = require('crypto');
+var ObjectId = require('mongodb').ObjectID;
 const nodemailer = require('nodemailer');
 
 const log = bunyan.createLogger({
@@ -136,20 +137,25 @@ function getUserById(db, id) {
     log.trace({userId: id}, 'Entered users.getUserById');
 
     return new Promise((resolve, reject) => {
-        getUser(db, {_id: id}).then((user) => {
-            if(user){
-                log.trace({userId: user._id}, 'User found, resolving from users.getUserById');
-            } else {
-                log.trace({userId: id}, 'User not found, resolving from users.getUserById with null');
-            }
-            resolve(user);
-        }, (err) => {
-            log.trace({
-                error: err,
-                userId: id
-            }, 'Error while searching for user by id, rejecting from users.getUserById');
-            reject(err);
-        });
+        if(ObjectId.isValid(id)){
+            getUser(db, {_id: new ObjectId(id)}).then((user) => {
+                if(user){
+                    log.trace({userId: user._id}, 'User found, resolving from users.getUserById');
+                } else {
+                    log.trace({userId: id}, 'User not found, resolving from users.getUserById with null');
+                }
+                resolve(user);
+            }, (err) => {
+                log.trace({
+                    error: err,
+                    userId: id
+                }, 'Error while searching for user by id, rejecting from users.getUserById');
+                reject(err);
+            });
+        } else {
+            log.trace({userId: id}, 'Id is not a valid ObjectId, resolving from users.getUserById with null');
+            resolve(null);
+        }
     });
 }
 

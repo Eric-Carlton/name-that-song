@@ -7,6 +7,7 @@ const mongo = require('mongodb').MongoClient;
 const users = require('./users');
 const privateProperties = require('../config/privateProperties');
 const appProperties = require('../config/appProperties');
+var ObjectId = require('mongodb').ObjectID;
 const bunyan = require('bunyan');
 
 const log = bunyan.createLogger({
@@ -78,42 +79,38 @@ function deleteRoom(db, room) {
     const collection = db.collection('rooms');
 
     return new Promise((resolve, reject) => {
-       collection.deleteOne({_id: room._id}).then((result) => {
-           log.trace({result: result, roomId: room._id}, 'Room deleted, resolving from rooms.deleteRoom');
-           resolve();
-       }, (err) => {
-           log.error({
-               error: err,
-               roomId: room._id
-           }, 'Error while deleting room, rejecting from rooms.updateRoomUsers');
-           reject({
-               error: {
-                   code: 1006,
-                   message: appProperties.errorMessages['1006']
-               }
-           });
-       });
-    });
-}
-
-function updateRoomUsers(db, room) {
-    log.trace({roomId: room._id}, 'Entered rooms.updateRoomUsers');
-
-    const collection = db.collection('rooms');
-
-    return new Promise((resolve, reject) => {
-        collection.updateOne({_id: room._id}, {
-            $set: {
-                users: room.users
-            }
-        }).then((result) => {
-            log.trace({result: result, roomId: room._id}, 'Resolving from rooms.updateRoomUsers');
+        collection.deleteOne({_id: room._id}).then((result) => {
+            log.trace({result: result, roomId: room._id}, 'Room deleted, resolving from rooms.deleteRoom');
             resolve();
         }, (err) => {
             log.error({
                 error: err,
                 roomId: room._id
-            }, 'Error while updating users for room, rejecting from rooms.updateRoomUsers');
+            }, 'Error while deleting room, rejecting from rooms.updateRoomUsers');
+            reject({
+                error: {
+                    code: 1006,
+                    message: appProperties.errorMessages['1006']
+                }
+            });
+        });
+    });
+}
+
+function updateRoom(db, room) {
+    log.trace({roomId: room._id}, 'Entered rooms.updateRoom');
+
+    const collection = db.collection('rooms');
+
+    return new Promise((resolve, reject) => {
+        collection.updateOne({_id: room._id}, room).then((result) => {
+            log.trace({result: result, roomId: room._id}, 'Resolving from rooms.updateRoom');
+            resolve();
+        }, (err) => {
+            log.error({
+                error: err,
+                roomId: room._id
+            }, 'Error while updating users for room, rejecting from rooms.updateRoom');
             reject({
                 error: {
                     code: 1006,
@@ -156,12 +153,8 @@ function getRoom(db, query) {
 function getRoomByName(db, roomName) {
     log.trace({roomName: roomName}, 'Entered rooms.getRoomByName');
 
-    const query = {
-        roomName: roomName
-    };
-
     return new Promise((resolve, reject) => {
-        getRoom(db, query).then((room) => {
+        getRoom(db, {roomName: roomName}).then((room) => {
             if (room) {
                 log.trace({roomName: room.roomName}, 'Room found, resolving from rooms.getRoomByName');
             } else {
@@ -182,26 +175,27 @@ function getRoomByName(db, roomName) {
 function getRoomById(db, id) {
     log.trace({id: id}, 'Entered rooms.getRoomById');
 
-    const query = {
-        _id: id
-    };
-
     return new Promise((resolve, reject) => {
-        getRoom(db, query).then((room) => {
-            if (room) {
-                log.trace({roomId: room._id}, 'Room found, resolving from rooms.getRoomById');
-            } else {
-                log.trace({roomId: id}, 'Room not found, resolving from rooms.getRoomById with null');
-            }
+        if (ObjectId.isValid(id)) {
+            getRoom(db, {_id: id}).then((room) => {
+                if (room) {
+                    log.trace({roomId: room._id}, 'Room found, resolving from rooms.getRoomById');
+                } else {
+                    log.trace({roomId: id}, 'Room not found, resolving from rooms.getRoomById with null');
+                }
 
-            resolve(room);
-        }, (err) => {
-            log.trace({
-                error: err,
-                roomId: id
-            }, 'Error while searching for room by roomName, rejecting from rooms.getRoomById');
-            reject(err);
-        });
+                resolve(room);
+            }, (err) => {
+                log.trace({
+                    error: err,
+                    roomId: id
+                }, 'Error while searching for room by roomName, rejecting from rooms.getRoomById');
+                reject(err);
+            });
+        } else {
+            log.trace({id: id}, 'Id is not a valid ObjectId, resolving from rooms.getRoomById with null');
+            resolve(null);
+        }
     });
 }
 
@@ -378,7 +372,7 @@ module.exports = {
 
                                         log.trace({users: room.users}, 'Room users changed');
 
-                                        updateRoomUsers(db, room).then(() => {
+                                        updateRoom(db, room).then(() => {
                                             getRoomByName(db, ownerName).then((room) => {
                                                 db.close();
 
@@ -454,15 +448,15 @@ module.exports = {
                     });
                 } else {
                     getRoomByName(db, ownerName).then((room) => {
-                        if(room){
+                        if (room) {
                             //determine if the host is leaving
                             let isHostLeaving = false;
                             //build a new users array with the users that are not leaving
                             let users = [];
-                            for(let userIdx = 0; userIdx < room.users.length; userIdx++){
+                            for (let userIdx = 0; userIdx < room.users.length; userIdx++) {
                                 let userInRoom = room.users[userIdx];
 
-                                if(userInRoom._id === userId){
+                                if (userInRoom._id.equals(new ObjectId(userId))) {
                                     isHostLeaving = userInRoom.isHost;
                                 } else {
                                     users.push(userInRoom);
@@ -472,14 +466,14 @@ module.exports = {
                             log.trace({users: users, userId: userId}, "User with userId removed");
                             room.users = users;
 
-                            if(isHostLeaving){
+                            if (isHostLeaving) {
                                 deleteRoom(db, room).then(() => {
                                     getRoomByName(db, ownerName).then((room) => {
-                                       db.close();
+                                        db.close();
 
-                                        log.trace({roomName:ownerName}, 'Resolving from rooms.leaveRoom');
+                                        log.trace({roomName: ownerName}, 'Resolving from rooms.leaveRoom');
                                         resolve(room);
-                                    },(err) => {
+                                    }, (err) => {
                                         db.close();
 
                                         log.trace({roomName: ownerName}, 'Error querying for room after delete, rejecting from rooms.leaveRoom');
@@ -492,15 +486,15 @@ module.exports = {
                                     reject(err);
                                 });
                             } else {
-                                updateRoomUsers(db, room).then(() => {
+                                updateRoom(db, room).then(() => {
                                     getRoomByName(db, ownerName).then((room) => {
                                         db.close();
 
                                         delete room.playlist;
 
-                                        log.trace({roomName:ownerName}, 'Resolving from rooms.leaveRoom');
+                                        log.trace({roomName: ownerName}, 'Resolving from rooms.leaveRoom');
                                         resolve(room);
-                                    },(err) => {
+                                    }, (err) => {
                                         db.close();
 
                                         log.trace({roomName: ownerName}, 'Error querying for room after removing user, rejecting from rooms.leaveRoom');
