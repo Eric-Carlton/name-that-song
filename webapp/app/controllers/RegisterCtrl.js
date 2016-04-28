@@ -36,9 +36,15 @@
             $scope.$watch('registerUsername', (newVal) => {
                 $scope.reisterUsername = newVal;
 
-                UserService.isUsernameAvailable(newVal).then(() => {
-                    $scope.usernameAvailable = true;
-                    $scope.$apply();
+                UserService.isUsernameAvailable(newVal).then((isAvailable) => {
+                    if(isAvailable){
+                        $scope.usernameAvailable = true;
+                        $scope.$apply();
+                    } else {
+                        $scope.usernameAvailable = false;
+                        $scope.$apply();
+                    }
+
                 }, () => {
                     $scope.usernameAvailable = false;
                     $scope.$apply();

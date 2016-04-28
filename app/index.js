@@ -6,6 +6,7 @@ const gameController = require('./controllers/gameController');
 const playlist = require('./utils/playlist');
 const users = require('./utils/users');
 const rooms = require('./utils/rooms');
+const passwords = require('./utils/passwords');
 
 const log = bunyan.createLogger({
     name: 'name-that-song',
@@ -46,11 +47,17 @@ server.post('/api/user/create', (req, res, next) => {
 
     if (req.params.hasOwnProperty('username')) {
         if (req.params.hasOwnProperty('password')) {
-            users.createUser(req.params.username, req.params.password, req.params.email).then(() => {
-                log.debug({response: 201}, 'Sending response from /user/create');
+            users.createUser(req.params.username, req.params.password, req.params.email).then((result) => {
+                log.debug({response: result}, 'Sending response from /user/create');
 
-                res.send(201);
-                return next();
+                if (result.error) {
+                    res.send(500, result);
+                    return next();
+                } else {
+                    res.send(201, result);
+                    return next();
+                }
+
             }, (err) => {
                 log.debug({response: err}, 'Sending response from /user/create');
 
@@ -91,11 +98,19 @@ server.post('/api/user/login', (req, res, next) => {
 
     if (req.params.hasOwnProperty('username')) {
         if (req.params.hasOwnProperty('password')) {
-            users.loginUser(req.params.username, req.params.password).then((user) => {
-                log.debug({response: user}, 'Sending response from /user/login');
+            users.loginUser(req.params.username, req.params.password).then((result) => {
+                if (result.error) {
+                    log.debug({response: {error: result.error}}, 'Sending response from /user/login');
 
-                res.send(200, user);
-                return next();
+                    res.send(500, {error: result.error});
+                    return next();
+                } else {
+                    log.debug({response: {user: result.user}}, 'Sending response from /user/login');
+
+                    res.send(200, {user: result.user});
+                    return next();
+                }
+
             }, (err) => {
                 log.debug({response: err}, 'Sending response from /user/login');
 
@@ -134,10 +149,14 @@ server.post('/api/user/login', (req, res, next) => {
 server.get('/api/user/available/:username', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/available/:username');
 
-    users.checkUsernameAvailable(req.params.username).then(() => {
-        log.debug({response: 204}, 'Sending response from /user/available/:username');
+    users.checkUsernameAvailable(req.params.username).then((isAvailable) => {
+        const response = {
+            isAvailable: isAvailable
+        };
+        log.debug({response: response}, 'Sending response from /user/available/:username');
 
-        res.send(204);
+
+        res.send(200, response);
         return next();
     }, (err) => {
         log.debug({response: err}, 'Sending response from /user/available/:username');
@@ -151,7 +170,7 @@ server.post('/api/user/password/reset', (req, res, next) => {
     log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/password/reset');
 
     if (req.params.hasOwnProperty('identifier')) {
-        users.resetPassword(req.params['identifier']).then(() => {
+        passwords.resetPassword(req.params.identifier).then(() => {
             log.debug({response: 204}, 'Sending response from /user/password/reset');
 
             res.send(204);
@@ -179,7 +198,7 @@ server.post('/api/user/password/reset', (req, res, next) => {
 
 server.put('/api/user/password/change', (req, res, next) => {
     log.debug({
-        identifier: req.params['username'],
+        identifier: req.params.username,
         ipAddress: req.connection.remoteAddress
     }, 'Request to /user/password/change');
 
@@ -187,11 +206,19 @@ server.put('/api/user/password/change', (req, res, next) => {
         if (req.params.hasOwnProperty('newPassword')) {
             if (req.params.hasOwnProperty('password')) {
 
-                users.changePassword(req.params['username'], req.params['password'], req.params['newPassword']).then(() => {
-                    log.debug({response: 204}, 'Sending response from /user/password/change');
+                passwords.changePassword(req.params.username, req.params.password, req.params.newPassword).then((result) => {
+                    if (result.error) {
+                        log.debug({response: result}, 'Sending response from /user/password/change');
 
-                    res.send(204);
-                    return next();
+                        res.send(500, result);
+                        return next();
+                    } else {
+                        log.debug({response: result}, 'Sending response from /user/password/change');
+
+                        res.send(200, result);
+                        return next();
+                    }
+
                 }, (err) => {
                     log.debug({response: err}, 'Sending response from /user/password/change');
 

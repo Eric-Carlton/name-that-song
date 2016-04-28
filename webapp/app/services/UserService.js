@@ -49,8 +49,8 @@
                     method: 'GET',
                     url: serviceProperties.host + serviceProperties.usernameAvailableRoute + username,
                     timeout: serviceProperties.timeout
-                }).then(() => {
-                    resolve();
+                }).then((res) => {
+                    resolve(res.data.isAvailable);
                 }, (err) => {
                     if (err && err.hasOwnProperty('data') && err.data && err.data.hasOwnProperty('error') &&
                         err.data.error && err.data.error.hasOwnProperty('message') && err.data.error.message &&
@@ -59,7 +59,7 @@
                     } else {
                         reject({
                             code: '0000',
-                            message: 'Unable to send login request. Please check internet connection and try again.'
+                            message: 'Unable to send username availability request. Please check internet connection and try again.'
                         });
                     }
                 });
