@@ -2,10 +2,10 @@
 const bunyan = require('bunyan');
 const restify = require('restify');
 const appProperties = require('./config/appProperties');
-const UserRoutes = require('./routes/UserRoutes');
-const RoomRoutes = require('./routes/RoomRoutes');
-const SongRoutes = require('./routes/SongRoutes');
-const PlaylistRoutes = require('./routes/PlaylistRoutes');
+const userRoutes = require('./routes/userRoutes');
+const roomRoutes = require('./routes/roomRoutes');
+const songRoutes = require('./routes/songRoutes');
+const playlistRoutes = require('./routes/PlaylistRoutes');
 
 const log = bunyan.createLogger({
     name: 'name-that-song',
@@ -42,20 +42,16 @@ server.use(restify.queryParser());
 server.use(restify.bodyParser());
 
 //create /api/user routes
-const userRoutes = new UserRoutes(server);
-userRoutes.createRoutes();
+userRoutes.createRoutes(server);
 
 //create /api/room routes
-const roomRoutes = new RoomRoutes(server);
-roomRoutes.createRoutes();
+roomRoutes.createRoutes(server);
 
 //create the /api/song routes
-const songRoutes = new SongRoutes(server);
-songRoutes.createRoutes();
+songRoutes.createRoutes(server);
 
 //create the /api/playlist routes
-const playlistRoutes = new PlaylistRoutes(server);
-playlistRoutes.createRoutes();
+playlistRoutes.createRoutes(server);
 
 server.listen(appProperties.serverPort, function () {
     log.debug('%s listening at %s', server.name, server.url);

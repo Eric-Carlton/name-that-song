@@ -25,17 +25,9 @@ const log = bunyan.createLogger({
     ]
 });
 
-class UserRoutes {
-    /**
-     * Sets this.server.
-     * @param server    -   A restify server.
-     */
-    constructor(server) {
-        this.server = server;
-    }
-    
-    createRoutes() {
-        this.server.post('/api/user/create', (req, res, next) => {
+module.exports = {
+    createRoutes: (server) => {
+        server.post('/api/user/create', (req, res, next) => {
             log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/create');
 
             if (req.params.hasOwnProperty('username')) {
@@ -86,7 +78,7 @@ class UserRoutes {
             }
         });
 
-        this.server.post('/api/user/login', (req, res, next) => {
+        server.post('/api/user/login', (req, res, next) => {
             log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/login');
 
             if (req.params.hasOwnProperty('username')) {
@@ -139,7 +131,7 @@ class UserRoutes {
             }
         });
 
-        this.server.get('/api/user/available/:username', (req, res, next) => {
+        server.get('/api/user/available/:username', (req, res, next) => {
             log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/available/:username');
 
             users.checkUsernameAvailable(req.params.username).then((isAvailable) => {
@@ -159,7 +151,7 @@ class UserRoutes {
             });
         });
 
-        this.server.post('/api/user/password/reset', (req, res, next) => {
+        server.post('/api/user/password/reset', (req, res, next) => {
             log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /user/password/reset');
 
             if (req.params.hasOwnProperty('identifier')) {
@@ -189,7 +181,7 @@ class UserRoutes {
             }
         });
 
-        this.server.put('/api/user/password/change', (req, res, next) => {
+        server.put('/api/user/password/change', (req, res, next) => {
             log.debug({
                 identifier: req.params.username,
                 ipAddress: req.connection.remoteAddress
@@ -259,6 +251,4 @@ class UserRoutes {
             }
         });
     }
-}
-
-module.exports = UserRoutes;
+};

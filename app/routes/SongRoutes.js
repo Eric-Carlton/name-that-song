@@ -24,17 +24,9 @@ const log = bunyan.createLogger({
     ]
 });
 
-class SongRoutes {
-    /**
-     * Sets this.server.
-     * @param server    -   A restify server.
-     */
-    constructor(server) {
-        this.server = server;
-    }
-    
-    createRoutes(){
-        this.server.get('/api/song/random', (req, res, next) => {
+module.exports = {
+    createRoutes: (server) => {
+        server.get('/api/song/random', (req, res, next) => {
             log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'request to /api/song/random');
 
             //playlist not yet generated, send 404
@@ -83,7 +75,7 @@ class SongRoutes {
         });
 
         //TODO: title matcher logic
-        this.server.post('/api/song/guess', (req, res, next) => {
+        server.post('/api/song/guess', (req, res, next) => {
             log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'request to /api/song/guess');
 
             const response = {correct: true, score: 1};
@@ -94,6 +86,4 @@ class SongRoutes {
             return next();
         });
     }
-}
-
-module.exports = SongRoutes;
+};

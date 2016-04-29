@@ -25,17 +25,9 @@ const log = bunyan.createLogger({
     ]
 });
 
-class PlaylistRoutes{
-    /**
-     * Sets this.server.
-     * @param server    -   A restify server.
-     */
-    constructor(server) {
-        this.server = server;
-    }
-    
-    createRoutes(){
-        this.server.get('/api/playlist/generate/:artist', (req, res, next) => {
+module.exports = {
+    createRoutes: (server) => {
+        server.get('/api/playlist/generate/:artist', (req, res, next) => {
             log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /playlist/generate/:artist');
 
             //generate playlist from artist given
@@ -82,6 +74,4 @@ class PlaylistRoutes{
             });
         });
     }
-}
-
-module.exports = PlaylistRoutes;
+};

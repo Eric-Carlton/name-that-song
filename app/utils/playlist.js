@@ -135,10 +135,10 @@ module.exports = {
                         }
 
                         reject();
+                    } else {
+                        log.error('No preview URL retrieved');
+                        reject();
                     }
-                    log.error('No preview URL retrieved');
-                    reject();
-
                 } else {
                     if (response) {
                         log.error({statusCode: response.statusCode}, 'Request for preview URL returned status code other than 200');

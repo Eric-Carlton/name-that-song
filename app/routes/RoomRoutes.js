@@ -26,21 +26,9 @@ const log = bunyan.createLogger({
     ]
 });
 
-/**
- * Sets this.server.
- * @param server    -   A restify server.
- */
-class RoomRoutes {
-    /**
-     * Sets this.server.
-     * @param server    -   A restify server.
-     */
-    constructor(server) {
-        this.server = server;
-    }
-    
-    createRoutes(){
-        this.server.post('/api/room', (req, res, next) => {
+module.exports = {
+    createRoutes: (server) => {
+        server.post('/api/room', (req, res, next) => {
             log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'request to /api/room');
 
             if (req.params.hasOwnProperty('artist')) {
@@ -154,7 +142,7 @@ class RoomRoutes {
             }
         });
 
-        this.server.put('/api/room/:ownerName', (req, res, next) => {
+        server.put('/api/room/:ownerName', (req, res, next) => {
             log.debug({params: req.params, ipAddress: req.connection.remoteAddress}, 'Request to /api/room/:ownerName');
 
             if (req.params.hasOwnProperty('operation')) {
@@ -243,6 +231,4 @@ class RoomRoutes {
             }
         });
     }
-}
-
-module.exports = RoomRoutes;
+};
