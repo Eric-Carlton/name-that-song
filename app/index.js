@@ -5,7 +5,7 @@ const appProperties = require('./config/appProperties');
 const userRoutes = require('./routes/userRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const songRoutes = require('./routes/songRoutes');
-const playlistRoutes = require('./routes/PlaylistRoutes');
+const playlistRoutes = require('./routes/playlistRoutes');
 
 const log = bunyan.createLogger({
     name: 'name-that-song',
