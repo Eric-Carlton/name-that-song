@@ -4,7 +4,7 @@
 "use strict";
 
 const users = require('./users');
-const Collection = require('./collection');
+const Collection = require('./Collection');
 const rooms = new Collection('rooms');
 const appProperties = require('../config/appProperties');
 const ObjectId = require('mongodb').ObjectID;

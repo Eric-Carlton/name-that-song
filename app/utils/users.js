@@ -3,7 +3,7 @@
  */
 'use strict';
 
-const Collection = require('./collection');
+const Collection = require('./Collection');
 const users = new Collection('users');
 const appProperties = require('../config/appProperties');
 const bunyan = require('bunyan');
@@ -258,6 +258,15 @@ function generatePasswordHashForUsername(username, password) {
 
 
 module.exports = {
+    /**
+     * Creates a user with the given username, password and email address.
+     * @param username      -   The username of the user to be created. Must be unique.
+     * @param password      -   The password of the user to be created.
+     * @param email         -   Optional.  The email address of the user to be created.  If provided, must be unique.
+     * @returns {Promise}   -   If the operation was successful and the username and email were unique, resolves with the user added,
+     *                          omitting the password and salt properties.
+     *                          If the operation was not successful or the username and email were not unique, rejects with an error.
+     */
     createUser: (username, password, email) => {
         log.trace({username: username}, 'Entered users.createUser');
 
@@ -285,6 +294,7 @@ module.exports = {
                                         username: username,
                                         result: result
                                     }, 'Created user successfully, resolving from users.createUser');
+                                    
                                     resolve(result);
                                 }, (err) => {
 
@@ -292,6 +302,7 @@ module.exports = {
                                         error: err,
                                         username: username
                                     }, 'Error while creating user, rejecting from users.createUser');
+                                    
                                     reject(err);
                                 });
                             } else {
@@ -304,9 +315,9 @@ module.exports = {
                                     }
                                 });
                             }
-
                         }, (err) => {
                             log.trace({username: username}, 'Error occurred when checking for email uniqueness, rejecting from users.createUser');
+                            
                             reject(err);
                         });
                     } else {
@@ -326,6 +337,7 @@ module.exports = {
                                 username: username,
                                 result: result
                             }, 'Created user successfully, resolving from users.createUser');
+                            
                             resolve(result);
                         }, (err) => {
 
@@ -333,6 +345,7 @@ module.exports = {
                                 error: err,
                                 username: username
                             }, 'Error while creating user, rejecting from users.createUser');
+                            
                             reject(err);
                         });
                     }
@@ -348,11 +361,19 @@ module.exports = {
                 }
             }, (err) => {
                 log.trace({username: username}, 'Error occurred when checking for username uniqueness, rejecting from users.createUser');
+                
                 reject(err);
             });
         });
     },
 
+    /**
+     * Returns a promise that resolves to true if the provided username does not exist in the users collection, false otherwise.
+     * @param username      -   The username to determine uniqueness for.
+     * @returns {Promise}   -   If the operation was successful, resolves to true if the username does not exist in the users collection.
+     *                          If the operation was successful, resolves to false if the username exists in the users collection.
+     *                          If the operation was not successful, rejects with an error.
+     */                       
     checkUsernameAvailable: (username) => {
         return new Promise((resolve, reject) => {
             isUsernameUnique(username).then((isUnique) => {
@@ -365,11 +386,21 @@ module.exports = {
                 resolve(isUnique);
             }, (err) => {
                 log.trace({username: username}, 'An error occurred while checking username availability, rejecting from users.checkUsernameAvailable');
+                
                 reject(err);
             });
         });
     },
 
+    /**
+     * Determines if the username and password match a user in the users collection.  Resolves with the user having the
+     * username and password combination provided, if one exists.  Resolves with an error otherwise.
+     * @param username      -   The username of the user to log in.
+     * @param password      -   The password of the user to log in.
+     * @returns {Promise}   -   If the operation was successful and the username/password combination belong to a user
+     *                          in the users collection, resolves with that user.  Otherwise, resolves with an error.
+     *                          If the operation was not successful, rejects with an error.
+     */
     loginUser: (username, password) => {
         return new Promise((resolve, reject) => {
             verifyLogin(username, password).then((result) => {
@@ -391,6 +422,14 @@ module.exports = {
         });
     },
 
+    /**
+     * Retrieves a user from the users collection with an _id property matching the id given.  Resolves with the user,
+     * if one is found and null otherwise.
+     * @param id            -   The id of the user to retrieve.
+     * @returns {Promise}   -   If the operation was successful, resolves with the user with an _id property matching the 
+     *                          given id.  If one does not exist, resolves with null.
+     *                          If the operation was not successful, resolves with an error.
+     */
     getUser: (id) => {
         log.trace({userId: id}, 'Entered users.getUser');
 

@@ -4,7 +4,7 @@
 "use strict";
 
 const privateProperties = require('../config/privateProperties');
-const Collection = require('./collection');
+const Collection = require('./Collection');
 const passwords = new Collection('users');
 const users = require('./users');
 const appProperties = require('../config/appProperties');
@@ -242,6 +242,16 @@ function emailUserNewPassword(username, email, password) {
 }
 
 module.exports = {
+    /**
+     * Updates the user in the users collection with the given username and password to the the new password given.
+     * @param username      -   The username of the user to update.
+     * @param oldPassword   -   The current password of the user to update.
+     * @param newPassword   -   The new password for the user.
+     * @returns {Promise}   -   If the operation was successful and a user was found, resolves to the user that was updated,
+     *                          omitting the password and salt properties.  If a user was not found with the give username/
+     *                          password combination, resolves with an error.
+     *                          If the operation was not successful, rejects with an error.
+     */
     changePassword: (username, oldPassword, newPassword) => {
         return new Promise((resolve, reject) => {
             users.loginUser(username.toLowerCase(), oldPassword).then((login) => {
@@ -271,6 +281,15 @@ module.exports = {
         });
     },
 
+    /**
+     * Attempts to find a user with a username or email property matching the identifier given. If a user is found and 
+     * has an email property that is not null, generates a random password and emails it to the email address associated
+     * with the user.  If the email fails to send, the user's password is rolled back to its original value. Resolves
+     * with null.
+     * @param identifier    -   The email address or username for the user who needs a password reset.
+     * @returns {Promise}   -   If the operation was successful, resolves with null.
+     *                          If the operation was not successful, rejects with an error.
+     */
     resetPassword: (identifier) => {
         return new Promise((resolve, reject) => {
             getUserByUsernameOrEmail(identifier).then((user) => {
