@@ -27,10 +27,6 @@ const log = bunyan.createLogger({
 
 module.exports = {
     /**
-     *
-     */
-
-    /**
      * Gets a playlist from echonest for the artist given
      * @param artist -      name of artist to generate playlist from
      * @returns {Promise} - Resolves on successful call to echonest API. Rejects on unsuccessful call or if the
@@ -134,9 +130,10 @@ module.exports = {
                             }
                         }
 
+                        log.error('No matching preview urls retrieved');
                         reject();
                     } else {
-                        log.error('No preview URL retrieved');
+                        log.error('No tracks for song retrieved');
                         reject();
                     }
                 } else {
