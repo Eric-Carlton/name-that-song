@@ -37,7 +37,9 @@ function getUserByUsername(username) {
     log.trace({username: username}, 'Entered users.getUserByUsername');
 
     return new Promise((resolve, reject) => {
-        users.getDocument({username: username.toLowerCase()}).then((user) => {
+        let re = new RegExp(username, "i");
+        
+        users.getDocument({username: re}).then((user) => {
             if (user) {
                 log.trace({username: user.username}, 'User found, resolving from users.getUserByUsername');
             } else {
@@ -66,7 +68,8 @@ function getUserByEmail(email) {
     log.trace({email: email}, 'Entered users.getUserByEmail');
 
     return new Promise((resolve, reject) => {
-        users.getDocument({email: email.toLowerCase()}).then((user) => {
+        let re = new RegExp(email, "i");
+        users.getDocument({email: re}).then((user) => {
             if (user) {
                 log.trace({username: user.username}, 'User found, resolving from users.getUserByEmail');
             } else {
@@ -279,11 +282,11 @@ module.exports = {
                         isEmailUnique(email).then((isEmailUnique) => {
                             if (isEmailUnique) {
                                 users.insertDocument({
-                                    username: username.toLowerCase(),
+                                    username: username,
                                     password: hashedPassword.hash,
-                                    email: email.toLowerCase(),
+                                    email: email,
                                     salt: hashedPassword.salt
-                                }, {username: username.toLowerCase()}).then((result) => {
+                                }, {username: username}).then((result) => {
                                     if (result) {
                                         //want to return the entire user except the password and salt
                                         delete result.salt;
@@ -322,11 +325,11 @@ module.exports = {
                         });
                     } else {
                         users.insertDocument({
-                            username: username.toLowerCase(),
+                            username: username,
                             password: hashedPassword.hash,
                             email: null,
                             salt: hashedPassword.salt
-                        }, {username: username.toLowerCase()}).then((result) => {
+                        }, {username: username}).then((result) => {
                             if (result) {
                                 //want to return the entire user except the password and salt
                                 delete result.salt;

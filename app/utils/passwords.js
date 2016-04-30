@@ -39,14 +39,16 @@ function getUserByUsernameOrEmail(identifier) {
     log.trace({identifier: identifier}, 'Entered passwords.getUserByUsernameOrEmail');
 
     return new Promise((resolve, reject) => {
+        let re = new RegExp(identifier, "i");
+        
         //try to find user by username
-        passwords.getDocument({username: identifier.toLowerCase()}).then((user) => {
+        passwords.getDocument({username: re}).then((user) => {
             if (user) {
                 log.trace({username: user.username}, 'User found, resolving from passwords.getUserByUsernameOrEmail');
                 resolve(user);
             } else {
                 //failed to find user by username, try by email
-                passwords.getDocument({email: identifier.toLowerCase()}).then((user) => {
+                passwords.getDocument({email: re}).then((user) => {
                     if (user) {
                         log.trace({username: user.username}, 'User found, resolving from passwords.getUserByUsernameOrEmail');
                     } else {
@@ -143,7 +145,7 @@ function resetUserPassword(user) {
         if (user.email && user.email.length > 0) {
             const plainTextPassword = crypto.randomBytes(8).toString('hex');
 
-            const password = generatePasswordHashForUsername(user.username, crypto.createHash('sha512').update('nameThatSong' + user.username + plainTextPassword, 'utf8').digest('hex'));
+            const password = generatePasswordHashForUsername(user.username, crypto.createHash('sha512').update('nameThatSong' + user.username.toLowerCase() + plainTextPassword, 'utf8').digest('hex'));
 
             changeUserPassword(user, password).then((result) => {
                 log.trace({username: user.username}, 'Password reset successful for user.  Resolving form passwords.resetUserPassword');
@@ -254,7 +256,7 @@ module.exports = {
      */
     changePassword: (username, oldPassword, newPassword) => {
         return new Promise((resolve, reject) => {
-            users.loginUser(username.toLowerCase(), oldPassword).then((login) => {
+            users.loginUser(username, oldPassword).then((login) => {
                 if (login.error) {
                     log.trace({username: username}, 'Username/password combination not found, resolving from passwords.changePassword');
                     resolve(login);

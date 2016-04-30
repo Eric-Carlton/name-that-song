@@ -148,7 +148,7 @@ module.exports = {
             if (req.params.hasOwnProperty('operation')) {
                 if (req.params.hasOwnProperty('userId')) {
                     if (req.params.operation.toLowerCase() === 'join') {
-                        rooms.joinRoom(req.params.ownerName.toLowerCase(), req.params.userId).then((room) => {
+                        rooms.joinRoom(req.params.ownerName, req.params.userId).then((room) => {
                             if (room) {
                                 const response = {room: room};
 

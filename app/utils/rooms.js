@@ -37,7 +37,8 @@ function getRoomByName(roomName) {
     log.trace({roomName: roomName}, 'Entered rooms.getRoomByName');
 
     return new Promise((resolve, reject) => {
-        rooms.getDocument({roomName: roomName}).then((room) => {
+        let re = new RegExp(roomName, "i");
+        rooms.getDocument({roomName: re}).then((room) => {
             if (room) {
                 log.trace({roomName: room.roomName}, 'Room found, resolving from rooms.getRoomByName');
             } else {
@@ -103,7 +104,7 @@ function getRoomByNameOrId(identifier) {
 
     return new Promise((resolve, reject) => {
         //attempt to get room by name
-        getRoomByName(identifier.toLowerCase()).then((room) => {
+        getRoomByName(identifier).then((room) => {
             if (room) {
                 log.trace({identifier: identifier}, 'Room found, resolving from rooms.getRoomByNameOrId');
                 
@@ -183,7 +184,7 @@ module.exports = {
 
         return new Promise((resolve, reject) => {
             //check if the room exists before creation
-            getRoomByName(host.username.toLowerCase()).then((room) => {
+            getRoomByName(host.username).then((room) => {
                 if (room) {
                     //players shouldn't see the playlist, delete it before resolving.
                     delete room.playlist;
@@ -200,10 +201,10 @@ module.exports = {
                     delete host.email;
 
                     rooms.insertDocument({
-                        roomName: host.username.toLowerCase(),
+                        roomName: host.username,
                         users: [host],
                         playlist: playlist
-                    }, {roomName: host.username.toLowerCase()}).then((room) => {
+                    }, {roomName: host.username}).then((room) => {
                         //players shouldn't see the playlist, delete it before resolving.
                         delete room.playlist;
 
@@ -241,7 +242,7 @@ module.exports = {
             users.getUser(userId).then((user) => {
                 if (user) {
                     //retrieve the user based on the roomName passed in
-                    getRoomByName(roomName.toLowerCase()).then((room) => {
+                    getRoomByName(roomName).then((room) => {
                         if (room) {
                             //determine if user is already in the room
                             let isUserInRoom = false;
