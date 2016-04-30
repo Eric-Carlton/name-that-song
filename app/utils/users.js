@@ -37,7 +37,7 @@ function getUserByUsername(username) {
     log.trace({username: username}, 'Entered users.getUserByUsername');
 
     return new Promise((resolve, reject) => {
-        let re = new RegExp(username, "i");
+        let re = new RegExp('^' + username + '$', 'i');
         
         users.getDocument({username: re}).then((user) => {
             if (user) {
@@ -68,7 +68,7 @@ function getUserByEmail(email) {
     log.trace({email: email}, 'Entered users.getUserByEmail');
 
     return new Promise((resolve, reject) => {
-        let re = new RegExp(email, "i");
+        let re = new RegExp('^' + email + '$', 'i');
         users.getDocument({email: re}).then((user) => {
             if (user) {
                 log.trace({username: user.username}, 'User found, resolving from users.getUserByEmail');

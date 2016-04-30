@@ -39,7 +39,7 @@ function getUserByUsernameOrEmail(identifier) {
     log.trace({identifier: identifier}, 'Entered passwords.getUserByUsernameOrEmail');
 
     return new Promise((resolve, reject) => {
-        let re = new RegExp(identifier, "i");
+        let re = new RegExp('^' + identifier + '$', 'i');
         
         //try to find user by username
         passwords.getDocument({username: re}).then((user) => {

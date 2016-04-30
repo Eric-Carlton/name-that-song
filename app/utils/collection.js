@@ -141,7 +141,7 @@ class Collection {
      *                          Otherwise, rejects with an error.
      */
     getDocument(query) {
-        log.trace({collection: this.collectionName, query: query}, 'Entered Collection.getDocument');
+        log.trace({collection: this.collectionName, query: query.toString()}, 'Entered Collection.getDocument');
 
         return new Promise((resolve, reject) => {
             this._connectToDb().then((connection) => {
@@ -157,7 +157,7 @@ class Collection {
                         else {
                             log.trace({
                                 collection: this.collectionName,
-                                query: query
+                                query: query.toString()
                             }, 'Document not found, resolving from Collection.getDocument with null');
                         }
 
@@ -169,7 +169,7 @@ class Collection {
                         log.error({
                             collection: this.collectionName,
                             error: err,
-                            query: query
+                            query: query.toString()
                         }, 'Error while searching for document, rejecting from Collection.getDocument');
                         reject({
                             error: {
@@ -182,7 +182,7 @@ class Collection {
                 //error occurred while connecting to db
                 log.trace({
                     collection: this.collectionName,
-                    query: query,
+                    query: query.toString(),
                     error: err
                 }, 'Error connecting to DB, rejecting from Collection.getDocument');
                 reject(err);
